@@ -2,8 +2,10 @@
 
 namespace platz1de\WaterLogging;
 
+use pocketmine\block\Air;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\block\Water;
+use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerBucketEmptyEvent;
 use pocketmine\event\player\PlayerBucketFillEvent;
@@ -11,9 +13,13 @@ use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\item\Bucket;
 use pocketmine\item\LiquidBucket;
 use pocketmine\item\VanillaItems;
+use pocketmine\scheduler\ClosureTask;
 
 class EventListener implements Listener
 {
+	/**
+	 * @priority LOW
+	 */
 	public function onInteract(PlayerInteractEvent $event): void
 	{
 		if (!WaterLoggableBlocks::isWaterLoggable($event->getBlock())) {
@@ -55,6 +61,21 @@ class EventListener implements Listener
 					$player->getInventory()->addItem($ev->getItem());
 				}
 			}
+		}
+	}
+
+	/**
+	 * @priority MONITOR
+	 */
+	public function onBreak(BlockBreakEvent $event): void
+	{
+		if (WaterLogging::isWaterLogged($event->getBlock())) {
+			WaterLogging::getInstance()->getScheduler()->scheduleTask(new ClosureTask(function () use ($event): void {
+				if ($event->getBlock()->getPosition()->getWorld()->getBlock($event->getBlock()->getPosition()) instanceof Air) {
+					WaterLogging::removeWaterLogging($event->getBlock());
+					$event->getBlock()->getPosition()->getWorld()->setBlock($event->getBlock()->getPosition(), VanillaBlocks::WATER());
+				}
+			}));
 		}
 	}
 }
