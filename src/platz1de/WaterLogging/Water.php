@@ -17,7 +17,6 @@ class Water extends PMWater
 
 	public function onScheduledUpdate(): void
 	{
-		var_dump($this->decay);
 		if ($this->decay > 0) {
 			$adjacent = WaterLogging::isWaterLoggedAt($this->position->getWorld(), $this->position->add(0, 0, -1)) +
 				WaterLogging::isWaterLoggedAt($this->position->getWorld(), $this->position->add(0, 0, 1)) +
