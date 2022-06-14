@@ -6,6 +6,7 @@ use pocketmine\block\Air;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\block\Water;
 use pocketmine\event\block\BlockBreakEvent;
+use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerBucketEmptyEvent;
 use pocketmine\event\player\PlayerBucketFillEvent;
@@ -76,6 +77,17 @@ class EventListener implements Listener
 					$event->getBlock()->getPosition()->getWorld()->setBlock($event->getBlock()->getPosition(), VanillaBlocks::WATER());
 				}
 			}));
+		}
+	}
+
+	/**
+	 * @priority MONITOR
+	 */
+	public function onPlace(BlockPlaceEvent $event): void
+	{
+		$block = $event->getBlockReplaced();
+		if ($block instanceof Water && $block->isSource() && WaterLoggableBlocks::isWaterLoggable($event->getBlock())) {
+			WaterLogging::addWaterLogging($event->getBlock());
 		}
 	}
 }
