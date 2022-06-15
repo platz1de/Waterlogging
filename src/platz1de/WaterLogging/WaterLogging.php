@@ -54,7 +54,11 @@ class WaterLogging extends PluginBase
 		if ($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ()) instanceof Air) {
 			return false; //technically, this is still waterlogged, but shouldn't be rendered as such (created by direct chunk manipulation)
 		}
-		$layer = self::getBlockLayer($world, $pos);
+		try {
+			$layer = self::getBlockLayer($world, $pos);
+		} catch (UnexpectedValueException) {
+			return false; // Water can attempt to flow next to unloaded chunks
+		}
 		return $layer->get($pos->getX() & 0x0f, $pos->getY() & 0x0f, $pos->getZ() & 0x0f) >> Block::INTERNAL_METADATA_BITS === BlockLegacyIds::FLOWING_WATER;
 	}
 
