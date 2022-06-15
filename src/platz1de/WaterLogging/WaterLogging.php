@@ -106,7 +106,7 @@ class WaterLogging extends PluginBase
 	{
 		$subChunk = $world->getChunk($pos->getX() >> 4, $pos->getZ() >> 4)?->getSubChunk($pos->getY() >> 4);
 		if ($subChunk === null || !isset($subChunk->getBlockLayers()[0])) {
-			throw new UnexpectedValueException("Block is not in an existing subchunk");
+			throw new UnexpectedValueException("Block is not in loaded terrain");
 		}
 		if (!isset($subChunk->getBlockLayers()[self::WATERLOGGING_LAYER])) {
 			(function () {
