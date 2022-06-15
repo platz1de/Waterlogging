@@ -2,7 +2,6 @@
 
 namespace platz1de\WaterLogging;
 
-use pocketmine\block\Air;
 use pocketmine\block\Block;
 use pocketmine\block\BlockBreakInfo as BreakInfo;
 use pocketmine\block\BlockFactory;
@@ -47,19 +46,23 @@ class WaterLogging extends PluginBase
 	/**
 	 * @param World   $world
 	 * @param Vector3 $pos
+	 * @param bool    $validate Whether to validate if the block is even able to be waterlogged
 	 * @return bool Whether the block is waterlogged
 	 */
-	public static function isWaterLoggedAt(World $world, Vector3 $pos): bool
+	public static function isWaterLoggedAt(World $world, Vector3 $pos, bool $validate = true): bool
 	{
-		if ($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ()) instanceof Air) {
-			return false; //technically, this is still waterlogged, but shouldn't be rendered as such (created by direct chunk manipulation)
-		}
 		try {
 			$layer = self::getBlockLayer($world, $pos);
 		} catch (UnexpectedValueException) {
 			return false; // Water can attempt to flow next to unloaded chunks
 		}
-		return $layer->get($pos->getX() & 0x0f, $pos->getY() & 0x0f, $pos->getZ() & 0x0f) >> Block::INTERNAL_METADATA_BITS === BlockLegacyIds::FLOWING_WATER;
+		$return = $layer->get($pos->getX() & 0x0f, $pos->getY() & 0x0f, $pos->getZ() & 0x0f) >> Block::INTERNAL_METADATA_BITS === BlockLegacyIds::FLOWING_WATER;
+		if ($validate && $return && !WaterLoggableBlocks::isWaterLoggable($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ()))) {
+			self::getInstance()->getLogger()->debug("Fixed leftover water logging state at {$pos->getX()}, {$pos->getY()}, {$pos->getZ()}");
+			self::removeWaterLogging($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ()));
+			$return = false;
+		}
+		return $return;
 	}
 
 	/**
