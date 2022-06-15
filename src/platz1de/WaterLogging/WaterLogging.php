@@ -24,7 +24,6 @@ class WaterLogging extends PluginBase
 	public function onLoad(): void
 	{
 		self::setInstance($this);
-		//TODO: setBlock Support using chunk listener
 		BlockFactory::getInstance()->register(new Water(new BlockIdentifierFlattened(BlockLegacyIds::FLOWING_WATER, [BlockLegacyIds::STILL_WATER], 0), "Water", BreakInfo::indestructible(500.0)), true);
 	}
 

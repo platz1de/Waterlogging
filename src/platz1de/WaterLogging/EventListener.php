@@ -11,6 +11,7 @@ use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerBucketEmptyEvent;
 use pocketmine\event\player\PlayerBucketFillEvent;
 use pocketmine\event\player\PlayerInteractEvent;
+use pocketmine\event\world\ChunkLoadEvent;
 use pocketmine\item\Bucket;
 use pocketmine\item\LiquidBucket;
 use pocketmine\item\VanillaItems;
@@ -89,5 +90,10 @@ class EventListener implements Listener
 		if ($block instanceof Water && $block->isSource() && WaterLoggableBlocks::isWaterLoggable($event->getBlock())) {
 			WaterLogging::addWaterLogging($event->getBlock());
 		}
+	}
+
+	public function onLoad(ChunkLoadEvent $event): void
+	{
+		$event->getWorld()->registerChunkListener(BlockListener::getForWorld($event->getWorld()), $event->getChunkX(), $event->getChunkZ());
 	}
 }
