@@ -74,22 +74,6 @@ class EventListener implements Listener
 	/**
 	 * @priority MONITOR
 	 */
-	public function onBreak(BlockBreakEvent $event): void
-	{
-		if (WaterLogging::isWaterLogged($event->getBlock())) {
-			WaterLogging::getInstance()->getScheduler()->scheduleTask(new ClosureTask(function () use ($event): void {
-				if ($event->getBlock()->getPosition()->getWorld()->getBlock($event->getBlock()->getPosition()) instanceof Air) {
-					WaterLogging::removeWaterLogging($event->getBlock());
-					$pos = $event->getBlock()->getPosition();
-					$event->getBlock()->getPosition()->getWorld()->setBlock($pos, VanillaBlocks::WATER()->setDecay(WaterLogging::getWaterDecayAt($pos->getWorld(), $pos)));
-				}
-			}));
-		}
-	}
-
-	/**
-	 * @priority MONITOR
-	 */
 	public function onPlace(BlockPlaceEvent $event): void
 	{
 		$block = $event->getBlockReplaced();

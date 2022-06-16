@@ -61,7 +61,7 @@ class BlockListener implements ChunkListener
 				(WaterLogging::getWaterDecayAt($this->world, $block, false) !== 0 && !WaterLoggableBlocks::isFlowingWaterLoggable($b = $this->world->getBlock($block)))
 			)) {
 			if ($b instanceof Air) {
-				$this->world->setBlock($block, VanillaBlocks::WATER()->setDecay(WaterLogging::getWaterDecayAt($this->world, $block)));
+				$this->world->setBlock($block, VanillaBlocks::WATER()->setDecay(WaterLogging::getWaterDecayAt($this->world, $block, false)));
 			}
 			WaterLogging::removeWaterLogging($b);
 		}
