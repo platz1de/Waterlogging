@@ -76,7 +76,7 @@ class WaterLoggableBlocks
 	 */
 	public static function isFlowingWaterLoggable(Block $block): bool
 	{
-		//Note: In bedrock Edition a ton of blocks are waterloggable
+		//Note: In bedrock Edition a few blocks are even water loggable by flowing water
 		return (
 			$block instanceof EndRod ||
 			$block instanceof Lever ||

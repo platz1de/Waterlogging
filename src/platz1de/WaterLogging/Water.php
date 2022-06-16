@@ -17,15 +17,16 @@ class Water extends PMWater
 
 	public function onScheduledUpdate(): void
 	{
+		//TODO: flowing water logged blocks
 		if ($this->decay > 0) {
-			$adjacent = WaterLogging::isWaterLoggedAt($this->position->getWorld(), $this->position->add(0, 0, -1)) +
-				WaterLogging::isWaterLoggedAt($this->position->getWorld(), $this->position->add(0, 0, 1)) +
-				WaterLogging::isWaterLoggedAt($this->position->getWorld(), $this->position->add(-1, 0, 0)) +
-				WaterLogging::isWaterLoggedAt($this->position->getWorld(), $this->position->add(1, 0, 0));
+			$adjacent = WaterLogging::isSourceWaterLoggedAt($this->position->getWorld(), $this->position->add(0, 0, -1)) +
+				WaterLogging::isSourceWaterLoggedAt($this->position->getWorld(), $this->position->add(0, 0, 1)) +
+				WaterLogging::isSourceWaterLoggedAt($this->position->getWorld(), $this->position->add(-1, 0, 0)) +
+				WaterLogging::isSourceWaterLoggedAt($this->position->getWorld(), $this->position->add(1, 0, 0));
 			if ($adjacent > 0) {
 				$decay = 1;
 				$falling = false;
-				if (WaterLogging::isWaterLoggedAt($this->position->getWorld(), $this->position->add(0, 1, 0))) {
+				if (WaterLogging::isSourceWaterLoggedAt($this->position->getWorld(), $this->position->add(0, 1, 0))) {
 					$falling = true;
 					$decay = 0;
 				}
@@ -71,7 +72,7 @@ class Water extends PMWater
 
 	protected function getEffectiveFlowDecay(Block $block): int
 	{
-		if (WaterLogging::isWaterLogged($block)) {
+		if (WaterLogging::isSourceWaterLogged($block)) {
 			return 0;
 		}
 		return parent::getEffectiveFlowDecay($block);

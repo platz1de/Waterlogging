@@ -54,7 +54,7 @@ class LayerUpdateTask extends Task
 	private function check(World $world, Vector3 $pos): void
 	{
 		if (WaterLogging::isWaterLoggedAt($world, $pos)) {
-			$block = VanillaBlocks::WATER();
+			$block = VanillaBlocks::WATER()->setDecay(WaterLogging::getWaterDecayAt($world, $pos));
 			$block->position($world, $pos->getX(), $pos->getY(), $pos->getZ());
 			$block->onScheduledUpdate();
 		}

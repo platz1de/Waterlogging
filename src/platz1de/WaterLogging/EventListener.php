@@ -30,7 +30,7 @@ class EventListener implements Listener
 		$item = $event->getItem();
 		$player = $event->getPlayer();
 		$block = $event->getBlock();
-		if ($item instanceof LiquidBucket && $item->getLiquid() instanceof Water && !WaterLogging::isWaterLogged($block)) {
+		if ($item instanceof LiquidBucket && $item->getLiquid() instanceof Water && !WaterLogging::isSourceWaterLogged($block)) {
 			$ev = new PlayerBucketEmptyEvent($player, $block, $event->getFace(), $item, VanillaItems::BUCKET());
 			$ev->call();
 			if (!$ev->isCancelled()) {
@@ -42,7 +42,7 @@ class EventListener implements Listener
 					$player->getInventory()->setItemInHand($ev->getItem());
 				}
 			}
-		} elseif ($item instanceof Bucket && WaterLogging::isWaterLogged($block)) {
+		} elseif ($item instanceof Bucket && WaterLogging::isSourceWaterLogged($block)) {
 			$ev = new PlayerBucketFillEvent($player, $block, $event->getFace(), $item, VanillaItems::WATER_BUCKET());
 			$ev->call();
 			if (!$ev->isCancelled()) {
@@ -75,7 +75,8 @@ class EventListener implements Listener
 			WaterLogging::getInstance()->getScheduler()->scheduleTask(new ClosureTask(function () use ($event): void {
 				if ($event->getBlock()->getPosition()->getWorld()->getBlock($event->getBlock()->getPosition()) instanceof Air) {
 					WaterLogging::removeWaterLogging($event->getBlock());
-					$event->getBlock()->getPosition()->getWorld()->setBlock($event->getBlock()->getPosition(), VanillaBlocks::WATER());
+					$pos = $event->getBlock()->getPosition();
+					$event->getBlock()->getPosition()->getWorld()->setBlock($pos, VanillaBlocks::WATER()->setDecay(WaterLogging::getWaterDecayAt($pos->getWorld(), $pos)));
 				}
 			}));
 		}
@@ -87,8 +88,11 @@ class EventListener implements Listener
 	public function onPlace(BlockPlaceEvent $event): void
 	{
 		$block = $event->getBlockReplaced();
-		if ($block instanceof Water && $block->isSource() && WaterLoggableBlocks::isWaterLoggable($event->getBlock())) {
-			WaterLogging::addWaterLogging($event->getBlock());
+		if ($block instanceof Water && (
+				($block->isSource() && WaterLoggableBlocks::isWaterLoggable($event->getBlock())) ||
+				(!$block->isSource() && WaterLoggableBlocks::isFlowingWaterLoggable($event->getBlock()))
+			)) {
+			WaterLogging::addWaterLogging($event->getBlock(), $block->getDecay());
 		}
 	}
 

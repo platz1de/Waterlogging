@@ -56,9 +56,12 @@ class BlockListener implements ChunkListener
 
 	public function onBlockChanged(Vector3 $block): void
 	{
-		if (WaterLogging::isWaterLoggedAt($this->world, $block, false) && !WaterLoggableBlocks::isWaterLoggable($b = $this->world->getBlock($block))) {
+		if (WaterLogging::isWaterLoggedAt($this->world, $block, false) && (
+				!WaterLoggableBlocks::isWaterLoggable($b = $this->world->getBlock($block)) ||
+				(WaterLogging::getWaterDecayAt($this->world, $block, false) !== 0 && !WaterLoggableBlocks::isFlowingWaterLoggable($b = $this->world->getBlock($block)))
+			)) {
 			if ($b instanceof Air) {
-				$this->world->setBlock($block, VanillaBlocks::WATER());
+				$this->world->setBlock($block, VanillaBlocks::WATER()->setDecay(WaterLogging::getWaterDecayAt($this->world, $block)));
 			}
 			WaterLogging::removeWaterLogging($b);
 		}
