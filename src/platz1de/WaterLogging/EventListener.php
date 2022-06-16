@@ -3,6 +3,8 @@
 namespace platz1de\WaterLogging;
 
 use pocketmine\block\Air;
+use pocketmine\block\Block;
+use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\block\Water;
 use pocketmine\event\block\BlockBreakEvent;
@@ -15,6 +17,9 @@ use pocketmine\event\world\ChunkLoadEvent;
 use pocketmine\item\Bucket;
 use pocketmine\item\LiquidBucket;
 use pocketmine\item\VanillaItems;
+use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\network\mcpe\protocol\types\BlockPosition;
+use pocketmine\network\mcpe\protocol\UpdateBlockPacket;
 use pocketmine\scheduler\ClosureTask;
 
 class EventListener implements Listener
@@ -88,11 +93,26 @@ class EventListener implements Listener
 	public function onPlace(BlockPlaceEvent $event): void
 	{
 		$block = $event->getBlockReplaced();
-		if ($block instanceof Water && (
-				($block->isSource() && WaterLoggableBlocks::isWaterLoggable($event->getBlock())) ||
-				(!$block->isSource() && WaterLoggableBlocks::isFlowingWaterLoggable($event->getBlock()))
-			)) {
-			WaterLogging::addWaterLogging($event->getBlock(), $block->getDecay());
+		if ($block instanceof Water) {
+			if ($block->isSource() && WaterLoggableBlocks::isWaterLoggable($event->getBlock())) {
+				WaterLogging::addWaterLogging($event->getBlock());
+			} elseif (!$block->isSource() && WaterLoggableBlocks::isFlowingWaterLoggable($event->getBlock())) {
+				WaterLogging::addWaterLogging($event->getBlock(), $block->getDecay());
+
+				//Workaround for https://bugs.mojang.com/browse/MCPE-33345 (still flashes though)
+				WaterLogging::getInstance()->getScheduler()->scheduleTask(new ClosureTask(function () use ($event): void {
+					$pos = $event->getBlock()->getPosition();
+					if (!WaterLogging::isWaterLoggedAt($pos->getWorld(), $pos)) {
+						return;
+					}
+					$event->getPlayer()->getNetworkSession()->sendDataPacket(UpdateBlockPacket::create(
+						BlockPosition::fromVector3($pos),
+						RuntimeBlockMapping::getInstance()->toRuntimeId((BlockLegacyIds::FLOWING_WATER << Block::INTERNAL_METADATA_BITS) | WaterLogging::getWaterDecayAt($pos->getWorld(), $pos)),
+						UpdateBlockPacket::FLAG_NETWORK,
+						UpdateBlockPacket::DATA_LAYER_LIQUID
+					));
+				}));
+			}
 		}
 	}
 
