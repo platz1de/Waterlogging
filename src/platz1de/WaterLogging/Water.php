@@ -5,6 +5,7 @@ namespace platz1de\WaterLogging;
 use pocketmine\block\Block;
 use pocketmine\block\Liquid;
 use pocketmine\block\Water as PMWater;
+use pocketmine\event\block\BlockSpreadEvent;
 use pocketmine\math\Vector3;
 
 class Water extends PMWater
@@ -17,23 +18,22 @@ class Water extends PMWater
 
 	public function onScheduledUpdate(): void
 	{
-		//TODO: flowing water logged blocks
 		if ($this->decay > 0) {
-			$adjacent = WaterLogging::isSourceWaterLoggedAt($this->position->getWorld(), $this->position->add(0, 0, -1)) +
-				WaterLogging::isSourceWaterLoggedAt($this->position->getWorld(), $this->position->add(0, 0, 1)) +
-				WaterLogging::isSourceWaterLoggedAt($this->position->getWorld(), $this->position->add(-1, 0, 0)) +
-				WaterLogging::isSourceWaterLoggedAt($this->position->getWorld(), $this->position->add(1, 0, 0));
-			if ($adjacent > 0) {
-				$decay = 1;
+			$adjacent = 0;
+			$decay = -1;
+			$this->getSmallestDecay($this->position->add(0, 0, -1), $decay, $adjacent);
+			$this->getSmallestDecay($this->position->add(0, 0, 1), $decay, $adjacent);
+			$this->getSmallestDecay($this->position->add(-1, 0, 0), $decay, $adjacent);
+			$this->getSmallestDecay($this->position->add(1, 0, 0), $decay, $adjacent);
+			$decay += $this->getFlowDecayPerBlock();
+			if ($decay > 0 && $decay < self::MAX_DECAY) {
 				$falling = false;
-				if (WaterLogging::isSourceWaterLoggedAt($this->position->getWorld(), $this->position->add(0, 1, 0))) {
+
+				if ($this->getEffectiveFlowDecay($this->position->getWorld()->getBlock($this->position->add(0, 1, 0))) >= 0) {
 					$falling = true;
 					$decay = 0;
 				}
-				$adjacent += $this->isWaterSourceAt($this->position->add(0, 0, -1)) +
-					$this->isWaterSourceAt($this->position->add(0, 0, 1)) +
-					$this->isWaterSourceAt($this->position->add(-1, 0, 0)) +
-					$this->isWaterSourceAt($this->position->add(1, 0, 0));
+
 				$minAdjacentSources = $this->getMinAdjacentSourcesToFormSource();
 				if ($minAdjacentSources !== null && $adjacent >= $minAdjacentSources) {
 					$bottomBlock = $this->position->getWorld()->getBlockAt($this->position->x, $this->position->y - 1, $this->position->z);
@@ -56,6 +56,18 @@ class Water extends PMWater
 	protected function flowIntoBlock(Block $block, int $newFlowDecay, bool $falling): void
 	{
 		$this->sourceHack = false;
+		if ($this->canFlowInto($block) && WaterLoggableBlocks::isFlowingWaterLoggable($block)) {
+			$new = clone $this;
+			$new->falling = $falling;
+			$new->decay = $falling ? 0 : $newFlowDecay;
+
+			$ev = new BlockSpreadEvent($block, $this, $new);
+			$ev->call();
+			if (!$ev->isCancelled()) {
+				WaterLogging::addWaterLogging($block, $newFlowDecay);
+			}
+			return;
+		}
 		parent::flowIntoBlock($block, $newFlowDecay, $falling);
 	}
 
@@ -64,16 +76,38 @@ class Water extends PMWater
 		return $this->sourceHack || parent::isSource();
 	}
 
-	private function isWaterSourceAt(Vector3 $pos): bool
+	/**
+	 * @param Vector3 $pos
+	 * @param int     $decay
+	 * @param int     $sources
+	 */
+	private function getSmallestDecay(Vector3 $pos, int &$decay, int &$sources): void
 	{
 		$block = $this->position->getWorld()->getBlockAt($pos->x, $pos->y, $pos->z);
-		return $block instanceof Liquid && $block->isSameType($this) && $block->isSource();
+		if ($block instanceof Liquid && $block->isSameType($this)) {
+			$blockDecay = $block->decay;
+
+			if ($block->isSource()) {
+				++$sources;
+			} elseif ($block->falling) {
+				$blockDecay = 0;
+			}
+		} elseif (WaterLogging::isSourceWaterLoggedAt($this->position->getWorld(), $pos)) {
+			$blockDecay = 0;
+			++$sources;
+		} else {
+			$blockDecay = WaterLogging::getWaterDecayAt($this->position->getWorld(), $pos);
+		}
+
+		if ($blockDecay !== false && ($blockDecay < $decay || $decay < 0)) {
+			$decay = $blockDecay;
+		}
 	}
 
 	protected function getEffectiveFlowDecay(Block $block): int
 	{
-		if (WaterLogging::isSourceWaterLogged($block)) {
-			return 0;
+		if (WaterLogging::isWaterLogged($block)) {
+			return WaterLogging::getWaterDecayAt($block->getPosition()->getWorld(), $block->getPosition());
 		}
 		return parent::getEffectiveFlowDecay($block);
 	}
