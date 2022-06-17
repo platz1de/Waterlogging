@@ -9,6 +9,9 @@ use pocketmine\block\BlockIdentifierFlattened;
 use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\math\Vector3;
+use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\network\mcpe\protocol\types\BlockPosition;
+use pocketmine\network\mcpe\protocol\UpdateBlockPacket;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\world\format\PalettedBlockArray;
@@ -135,6 +138,7 @@ class WaterLogging extends PluginBase
 		$pos = $block->getPosition();
 		$layer = self::getBlockLayer($pos->getWorld(), $pos);
 		$layer->set($pos->getX() & 0x0f, $pos->getY() & 0x0f, $pos->getZ() & 0x0f, $id);
+		self::sendUpdate($block->getPosition()->getWorld(), $block->getPosition());
 	}
 
 	/**
@@ -155,5 +159,19 @@ class WaterLogging extends PluginBase
 			})->call($subChunk);
 		}
 		return $subChunk->getBlockLayers()[self::WATERLOGGING_LAYER];
+	}
+
+	/**
+	 * @param World   $world
+	 * @param Vector3 $pos
+	 */
+	public static function sendUpdate(World $world, Vector3 $pos): void
+	{
+		$layer = self::getBlockLayer($world, $pos);
+		$id = RuntimeBlockMapping::getInstance()->toRuntimeId($layer->get($pos->getX() & 0x0f, $pos->getY() & 0x0f, $pos->getZ() & 0x0f));
+		$packet = UpdateBlockPacket::create(BlockPosition::fromVector3($pos), $id, UpdateBlockPacket::FLAG_NETWORK, UpdateBlockPacket::DATA_LAYER_LIQUID);
+		foreach ($world->getViewersForPosition($pos) as $player) {
+			$player->getNetworkSession()->sendDataPacket($packet);
+		}
 	}
 }
