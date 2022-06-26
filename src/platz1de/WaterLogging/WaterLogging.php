@@ -23,17 +23,23 @@ class WaterLogging extends PluginBase
 	use SingletonTrait;
 
 	public const WATERLOGGING_LAYER = 1;
+	private static Water $water;
 
 	public function onLoad(): void
 	{
 		self::setInstance($this);
-		BlockFactory::getInstance()->register(new Water(new BlockIdentifierFlattened(BlockLegacyIds::FLOWING_WATER, [BlockLegacyIds::STILL_WATER], 0), "Water", BreakInfo::indestructible(500.0)), true);
+		BlockFactory::getInstance()->register(self::$water = new Water(new BlockIdentifierFlattened(BlockLegacyIds::FLOWING_WATER, [BlockLegacyIds::STILL_WATER], 0), "Water", BreakInfo::indestructible(500.0)), true);
 	}
 
 	public function onEnable(): void
 	{
 		$this->getServer()->getPluginManager()->registerEvents(new EventListener(), $this);
 		$this->getScheduler()->scheduleRepeatingTask(new LayerUpdateTask(), 1);
+	}
+
+	public static function WATER(): Water
+	{
+		return clone self::$water;
 	}
 
 	/**

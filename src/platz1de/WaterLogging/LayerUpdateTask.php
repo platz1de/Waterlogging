@@ -8,39 +8,47 @@ use pocketmine\scheduler\Task;
 use pocketmine\Server;
 use pocketmine\utils\ReversePriorityQueue;
 use pocketmine\world\World;
-use SplPriorityQueue;
 use SplQueue;
 
 class LayerUpdateTask extends Task
 {
+	/** @var array<string, SplQueue<Vector3>> */
+	private array $cache = [];
+
 	/**
 	 * @noinspection PhpUndefinedFieldInspection
 	 */
 	public function onRun(): void
 	{
 		foreach (Server::getInstance()->getWorldManager()->getWorlds() as $world) {
-			/** @var array{ReversePriorityQueue<int, Vector3>, SplQueue<int>} $updates */
-			$updateData = (function (): array {
-				return [$this->scheduledBlockUpdateQueue, $this->neighbourBlockUpdateQueue];
+			if (!isset($this->cache[$world->getFolderName()])) {
+				$this->cache[$world->getFolderName()] = new SplQueue();
+			}
+			$cache = $this->cache[$world->getFolderName()];
+			while ($cache->count() > 0) {
+				$world->scheduleDelayedBlockUpdate($cache->dequeue(), VanillaBlocks::WATER()->tickRate());
+			}
+			/** @var ReversePriorityQueue<int, Vector3> $updateQueue */
+			$updateQueue = (function (): ReversePriorityQueue {
+				return $this->scheduledBlockUpdateQueue;
 			})->call($world);
-			/** @var ReversePriorityQueue<int, Vector3> $scheduledBlockUpdateQueue */
-			$updates = clone $updateData[0];
-			/** @var SplQueue<int> $neighbourBlockUpdateQueue */
-			$add = clone $updateData[1];
-			$updates->setExtractFlags(SplPriorityQueue::EXTR_DATA);
+			$updateQueue = clone $updateQueue;
 
-			$done = [];
-			while ($updates->valid()) {
-				$pos = $updates->extract();
-				$done[World::blockHash($pos->getX(), $pos->getY(), $pos->getZ())] = true;
+			while ($updateQueue->count() > 0 && $updateQueue->current()["priority"] <= Server::getInstance()->getTick()) {
+				$pos = $updateQueue->extract()["data"];
 				$this->check($world, $pos);
 			}
 
-			while ($add->count() > 0) {
-				$hash = $add->dequeue();
-				if (!isset($done[$hash])) {
-					World::getBlockXYZ($hash, $x, $y, $z);
-					$this->check($world, new Vector3($x, $y, $z));
+			/** @var SplQueue<int> $updates */
+			$updateData = (function (): SplQueue {
+				return $this->neighbourBlockUpdateQueue;
+			})->call($world);
+			$updateData = clone $updateData;
+			while ($updateData->count() > 0) {
+				$hash = $updateData->dequeue();
+				World::getBlockXYZ($hash, $x, $y, $z);
+				if (WaterLogging::isWaterLoggedAt($world, $v = new Vector3($x, $y, $z))) {
+					$cache->enqueue($v);
 				}
 			}
 		}
@@ -54,7 +62,7 @@ class LayerUpdateTask extends Task
 	private function check(World $world, Vector3 $pos): void
 	{
 		if (WaterLogging::isWaterLoggedAt($world, $pos)) {
-			$block = VanillaBlocks::WATER()->setDecay(WaterLogging::getWaterDecayAt($world, $pos));
+			$block = WaterLogging::WATER()->setDecay(WaterLogging::getWaterDecayAt($world, $pos));
 			$block->position($world, $pos->getX(), $pos->getY(), $pos->getZ());
 			$block->onScheduledUpdate();
 		}

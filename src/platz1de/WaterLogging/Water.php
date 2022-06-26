@@ -4,6 +4,7 @@ namespace platz1de\WaterLogging;
 
 use pocketmine\block\Block;
 use pocketmine\block\Liquid;
+use pocketmine\block\VanillaBlocks;
 use pocketmine\block\Water as PMWater;
 use pocketmine\event\block\BlockSpreadEvent;
 use pocketmine\math\Vector3;
@@ -25,30 +26,45 @@ class Water extends PMWater
 			$this->getSmallestDecay($this->position->add(0, 0, 1), $decay, $adjacent);
 			$this->getSmallestDecay($this->position->add(-1, 0, 0), $decay, $adjacent);
 			$this->getSmallestDecay($this->position->add(1, 0, 0), $decay, $adjacent);
-			$decay += $this->getFlowDecayPerBlock();
-			if ($decay > 0 && $decay < self::MAX_DECAY) {
-				$falling = false;
+			if ($decay !== -1) {
+				$decay += $this->getFlowDecayPerBlock();
+				if ($decay > self::MAX_DECAY) {
+					$decay = -1;
+				}
+			}
+			$falling = false;
 
-				if ($this->getEffectiveFlowDecay($this->position->getWorld()->getBlock($this->position->add(0, 1, 0))) >= 0) {
-					$falling = true;
+			if ($this->getEffectiveFlowDecay($this->position->getWorld()->getBlock($this->position->add(0, 1, 0))) >= 0) {
+				$falling = true;
+				$decay = 0;
+			}
+
+			$minAdjacentSources = $this->getMinAdjacentSourcesToFormSource();
+			if ($minAdjacentSources !== null && $adjacent >= $minAdjacentSources) {
+				$bottomBlock = $this->position->getWorld()->getBlockAt($this->position->x, $this->position->y - 1, $this->position->z);
+				if ($bottomBlock->isSolid() || ($bottomBlock instanceof Liquid && $bottomBlock->isSameType($this) && $bottomBlock->isSource())) {
 					$decay = 0;
+					$falling = false;
 				}
-
-				$minAdjacentSources = $this->getMinAdjacentSourcesToFormSource();
-				if ($minAdjacentSources !== null && $adjacent >= $minAdjacentSources) {
-					$bottomBlock = $this->position->getWorld()->getBlockAt($this->position->x, $this->position->y - 1, $this->position->z);
-					if ($bottomBlock->isSolid() || ($bottomBlock instanceof Liquid && $bottomBlock->isSameType($this) && $bottomBlock->isSource())) {
-						$decay = 0;
-						$falling = false;
+			}
+			if ($decay !== $this->decay || $falling !== $this->falling) {
+				$this->decay = $decay;
+				$this->falling = $falling;
+				if (WaterLogging::isWaterLogged($this)) {
+					if ($decay === -1) {
+						WaterLogging::removeWaterLogging($this);
+						return;
 					}
-				}
-				if ($decay !== $this->decay || $falling !== $this->falling) {
-					$this->decay = $decay;
-					$this->falling = $falling;
+					WaterLogging::addWaterLogging($this, $decay);
+				} else {
+					if (!$falling && $decay === -1) {
+						$this->getPosition()->getWorld()->setBlock($this->position, VanillaBlocks::AIR());
+						return;
+					}
 					$this->position->getWorld()->setBlock($this->position, $this);
 				}
-				$this->sourceHack = true;
 			}
+			$this->sourceHack = true;
 		}
 		parent::onScheduledUpdate();
 	}
@@ -56,7 +72,13 @@ class Water extends PMWater
 	protected function flowIntoBlock(Block $block, int $newFlowDecay, bool $falling): void
 	{
 		$this->sourceHack = false;
-		if ($this->canFlowInto($block) && WaterLoggableBlocks::isFlowingWaterLoggable($block)) {
+		if (!$this->canFlowInto($block)) {
+			return;
+		}
+		if (WaterLoggableBlocks::isFlowingWaterLoggable($block)) {
+			if (WaterLogging::isWaterLogged($block)) {
+				return;
+			}
 			$new = clone $this;
 			$new->falling = $falling;
 			$new->decay = $falling ? 0 : $newFlowDecay;
@@ -92,11 +114,11 @@ class Water extends PMWater
 			} elseif ($block->falling) {
 				$blockDecay = 0;
 			}
-		} elseif (WaterLogging::isSourceWaterLoggedAt($this->position->getWorld(), $pos)) {
-			$blockDecay = 0;
-			++$sources;
 		} else {
 			$blockDecay = WaterLogging::getWaterDecayAt($this->position->getWorld(), $pos);
+			if ($blockDecay === 0) {
+				++$sources;
+			}
 		}
 
 		if ($blockDecay !== false && ($blockDecay < $decay || $decay < 0)) {
