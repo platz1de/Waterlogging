@@ -21,12 +21,15 @@ class EventListener implements Listener
 	 */
 	public function onInteract(PlayerInteractEvent $event): void
 	{
-		if (!WaterLoggableBlocks::isWaterLoggable($event->getBlock())) {
+		if (WaterLoggableBlocks::isWaterLoggable($event->getBlock())) {
+			$block = $event->getBlock();
+		} elseif (WaterLoggableBlocks::isWaterLoggable($event->getBlock()->getSide($event->getFace()))) {
+			$block = $event->getBlock()->getSide($event->getFace());
+		} else {
 			return;
 		}
 		$item = $event->getItem();
 		$player = $event->getPlayer();
-		$block = $event->getBlock();
 		if ($item instanceof LiquidBucket && $item->getLiquid() instanceof Water && !WaterLogging::isSourceWaterLogged($block)) {
 			$ev = new PlayerBucketEmptyEvent($player, $block, $event->getFace(), $item, VanillaItems::BUCKET());
 			$ev->call();
