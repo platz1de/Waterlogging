@@ -5,6 +5,7 @@ namespace platz1de\WaterLogging;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\block\Water;
 use pocketmine\event\block\BlockPlaceEvent;
+use pocketmine\event\block\BlockUpdateEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerBucketEmptyEvent;
 use pocketmine\event\player\PlayerBucketFillEvent;
@@ -83,5 +84,15 @@ class EventListener implements Listener
 	public function onLoad(ChunkLoadEvent $event): void
 	{
 		$event->getWorld()->registerChunkListener(BlockListener::getForWorld($event->getWorld()), $event->getChunkX(), $event->getChunkZ());
+	}
+
+	/**
+	 * @priority MONITOR
+	 */
+	public function onUpdate(BlockUpdateEvent $event): void
+	{
+		if (WaterLogging::isWaterLogged($event->getBlock())) {
+			$event->getBlock()->getPosition()->getWorld()->scheduleDelayedBlockUpdate($event->getBlock()->getPosition(), VanillaBlocks::WATER()->tickRate());
+		}
 	}
 }
