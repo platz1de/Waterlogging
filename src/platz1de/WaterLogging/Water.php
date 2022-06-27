@@ -17,6 +17,9 @@ class Water extends PMWater
 	 */
 	private bool $sourceHack = false;
 
+	//TODO: Entity movement (never happening probably)
+	//TODO: obsidian...
+	//TODO: stairs etc
 	public function onScheduledUpdate(): void
 	{
 		if ($this->falling || $this->decay > 0) {
