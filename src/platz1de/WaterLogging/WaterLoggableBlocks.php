@@ -26,9 +26,12 @@ use pocketmine\block\RedstoneComparator;
 use pocketmine\block\RedstoneRepeater;
 use pocketmine\block\ShulkerBox;
 use pocketmine\block\Skull;
+use pocketmine\block\Slab;
 use pocketmine\block\SoulSand;
+use pocketmine\block\Stair;
 use pocketmine\block\Tripwire;
 use pocketmine\block\TripwireHook;
+use pocketmine\block\utils\SupportType;
 use pocketmine\block\Vine;
 
 //Fun with instance checks ...
@@ -85,5 +88,15 @@ class WaterLoggableBlocks
 			$block instanceof Tripwire ||
 			$block instanceof TripwireHook
 		);
+	}
+
+	/**
+	 * @param Block $block
+	 * @param int   $facing
+	 * @return bool
+	 */
+	public static function blocksWaterFlow(Block $block, int $facing): bool
+	{
+		return ($block instanceof Slab || $block instanceof Stair) && $block->getSupportType($facing) === SupportType::FULL();
 	}
 }

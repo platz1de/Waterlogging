@@ -7,6 +7,7 @@ use pocketmine\block\Liquid;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\block\Water as PMWater;
 use pocketmine\event\block\BlockSpreadEvent;
+use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 
 class Water extends PMWater
@@ -16,19 +17,20 @@ class Water extends PMWater
 	 * Needed as getSmallestFlowDecay() is private...
 	 */
 	private bool $sourceHack = false;
+	private bool $isWaterLoggedBlock = false;
 
 	//TODO: Entity movement (never happening probably)
 	//TODO: obsidian...
-	//TODO: stairs etc
-	public function onScheduledUpdate(): void
+	public function onScheduledUpdate($isWaterLogged = false): void
 	{
+		$this->isWaterLoggedBlock = $isWaterLogged;
 		if ($this->falling || $this->decay > 0) {
 			$adjacent = 0;
 			$decay = -1;
-			$this->getSmallestDecay($this->position->add(0, 0, -1), $decay, $adjacent);
-			$this->getSmallestDecay($this->position->add(0, 0, 1), $decay, $adjacent);
-			$this->getSmallestDecay($this->position->add(-1, 0, 0), $decay, $adjacent);
-			$this->getSmallestDecay($this->position->add(1, 0, 0), $decay, $adjacent);
+			$this->getSmallestDecay($this->position->add(0, 0, -1), Facing::SOUTH, $decay, $adjacent);
+			$this->getSmallestDecay($this->position->add(0, 0, 1), Facing::NORTH, $decay, $adjacent);
+			$this->getSmallestDecay($this->position->add(-1, 0, 0), Facing::EAST, $decay, $adjacent);
+			$this->getSmallestDecay($this->position->add(1, 0, 0), Facing::WEST, $decay, $adjacent);
 			if ($decay !== -1) {
 				$decay += $this->getFlowDecayPerBlock();
 				if ($decay > self::MAX_DECAY) {
@@ -96,6 +98,29 @@ class Water extends PMWater
 		parent::flowIntoBlock($block, $newFlowDecay, $falling);
 	}
 
+	/**
+	 * @param Block $block
+	 * @return bool
+	 */
+	protected function canFlowInto(Block $block): bool
+	{
+		if ($this->isWaterLoggedBlock) {
+			$diff = $block->getPosition()->subtractVector($this->getPosition());
+			$face = match ($diff->x << 2 | $diff->y << 1 | $diff->z) {
+				1 => Facing::SOUTH,
+				-1 => Facing::NORTH,
+				-2 => Facing::DOWN,
+				4 => Facing::EAST,
+				-4 => Facing::WEST,
+				default => null
+			};
+			if ($face !== null && WaterLoggableBlocks::blocksWaterFlow($this->getPosition()->getWorld()->getBlock($this->getPosition()), $face)) {
+				return false;
+			}
+		}
+		return parent::canFlowInto($block);
+	}
+
 	public function isSource(): bool
 	{
 		return $this->sourceHack || parent::isSource();
@@ -103,10 +128,11 @@ class Water extends PMWater
 
 	/**
 	 * @param Vector3 $pos
+	 * @param int     $face
 	 * @param int     $decay
 	 * @param int     $sources
 	 */
-	private function getSmallestDecay(Vector3 $pos, int &$decay, int &$sources): void
+	private function getSmallestDecay(Vector3 $pos, int $face, int &$decay, int &$sources): void
 	{
 		$block = $this->position->getWorld()->getBlockAt($pos->x, $pos->y, $pos->z);
 		if ($block instanceof Liquid && $block->isSameType($this)) {
@@ -120,6 +146,9 @@ class Water extends PMWater
 		} else {
 			$data = WaterLogging::getWaterDataAt($this->position->getWorld(), $pos);
 			if ($data === false) {
+				return;
+			}
+			if (WaterLoggableBlocks::blocksWaterFlow($block, $face)) {
 				return;
 			}
 			$blockDecay = $data & 0x07;
@@ -136,6 +165,19 @@ class Water extends PMWater
 	protected function getEffectiveFlowDecay(Block $block): int
 	{
 		if (WaterLogging::isWaterLogged($block)) {
+			$diff = $block->getPosition()->subtractVector($this->getPosition());
+			$face = match ($diff->x << 2 | $diff->y << 1 | $diff->z) {
+				1 => Facing::NORTH,
+				-1 => Facing::SOUTH,
+				//For some reason water can't flow down through stairs/slabs, but can get supported by it
+				//2 => Facing::DOWN,
+				4 => Facing::WEST,
+				-4 => Facing::EAST,
+				default => null
+			};
+			if ($face !== null && WaterLoggableBlocks::blocksWaterFlow($block, $face)) {
+				return -1;
+			}
 			return WaterLogging::getWaterDecayAt($block->getPosition()->getWorld(), $block->getPosition());
 		}
 		return parent::getEffectiveFlowDecay($block);

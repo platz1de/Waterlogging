@@ -42,7 +42,7 @@ class LayerUpdateTask extends Task
 			$block = WaterLogging::WATER()->setDecay($data & 0x07);
 			$block->setFalling(($data & BlockLegacyMetadata::LIQUID_FLAG_FALLING) !== 0);
 			$block->position($world, $pos->getX(), $pos->getY(), $pos->getZ());
-			$block->onScheduledUpdate();
+			$block->onScheduledUpdate(true);
 		}
 	}
 }
