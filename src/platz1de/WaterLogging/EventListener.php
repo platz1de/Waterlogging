@@ -77,7 +77,7 @@ class EventListener implements Listener
 				($block->isSource() && WaterLoggableBlocks::isWaterLoggable($event->getBlock())) ||
 				(!$block->isSource() && WaterLoggableBlocks::isFlowingWaterLoggable($event->getBlock()))
 			)) {
-			WaterLogging::addWaterLogging($event->getBlock(), $block->getDecay());
+			WaterLogging::addWaterLogging($event->getBlock(), $block->getDecay(), $block->isFalling());
 		}
 	}
 

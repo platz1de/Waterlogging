@@ -19,7 +19,7 @@ class Water extends PMWater
 
 	public function onScheduledUpdate(): void
 	{
-		if ($this->decay > 0) {
+		if ($this->falling || $this->decay > 0) {
 			$adjacent = 0;
 			$decay = -1;
 			$this->getSmallestDecay($this->position->add(0, 0, -1), $decay, $adjacent);
@@ -55,7 +55,7 @@ class Water extends PMWater
 						WaterLogging::removeWaterLogging($this);
 						return;
 					}
-					WaterLogging::addWaterLogging($this, $decay);
+					WaterLogging::addWaterLogging($this, $decay, $falling);
 				} else {
 					if (!$falling && $decay === -1) {
 						$this->getPosition()->getWorld()->setBlock($this->position, VanillaBlocks::AIR());
@@ -86,7 +86,7 @@ class Water extends PMWater
 			$ev = new BlockSpreadEvent($block, $this, $new);
 			$ev->call();
 			if (!$ev->isCancelled()) {
-				WaterLogging::addWaterLogging($block, $newFlowDecay);
+				WaterLogging::addWaterLogging($block, $newFlowDecay, $falling);
 			}
 			return;
 		}
@@ -115,13 +115,17 @@ class Water extends PMWater
 				$blockDecay = 0;
 			}
 		} else {
-			$blockDecay = WaterLogging::getWaterDecayAt($this->position->getWorld(), $pos);
-			if ($blockDecay === 0) {
+			$data = WaterLogging::getWaterDataAt($this->position->getWorld(), $pos);
+			if ($data === false) {
+				return;
+			}
+			$blockDecay = $data & 0x07;
+			if ($data === 0) {
 				++$sources;
 			}
 		}
 
-		if ($blockDecay !== false && ($blockDecay < $decay || $decay < 0)) {
+		if ($blockDecay < $decay || $decay < 0) {
 			$decay = $blockDecay;
 		}
 	}

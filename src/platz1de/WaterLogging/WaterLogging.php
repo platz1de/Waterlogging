@@ -7,6 +7,7 @@ use pocketmine\block\BlockBreakInfo as BreakInfo;
 use pocketmine\block\BlockFactory;
 use pocketmine\block\BlockIdentifierFlattened;
 use pocketmine\block\BlockLegacyIds;
+use pocketmine\block\BlockLegacyMetadata;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
@@ -79,7 +80,7 @@ class WaterLogging extends PluginBase
 	 */
 	public static function isSourceWaterLoggedAt(World $world, Vector3 $pos, bool $validate = true): bool
 	{
-		return self::getWaterDecayAt($world, $pos, $validate) === 0;
+		return self::getWaterDataAt($world, $pos, $validate) === 0;
 	}
 
 	/**
@@ -90,6 +91,18 @@ class WaterLogging extends PluginBase
 	 */
 	public static function getWaterDecayAt(World $world, Vector3 $pos, bool $validate = true): int|false
 	{
+		$data = self::getWaterDataAt($world, $pos, $validate);
+		return $data === false ? false : $data & 0x07;
+	}
+
+	/**
+	 * @param World   $world
+	 * @param Vector3 $pos
+	 * @param bool    $validate Whether to validate if the block is even able to be waterlogged
+	 * @return int|false
+	 */
+	public static function getWaterDataAt(World $world, Vector3 $pos, bool $validate = true): int|false
+	{
 		try {
 			$layer = self::getBlockLayer($world, $pos);
 		} catch (UnexpectedValueException) {
@@ -99,25 +112,27 @@ class WaterLogging extends PluginBase
 		if ($id >> Block::INTERNAL_METADATA_BITS !== BlockLegacyIds::FLOWING_WATER) {
 			return false;
 		}
-		$decay = $id & Block::INTERNAL_METADATA_MASK;
-		if ($validate && (
-				($decay === 0 && !WaterLoggableBlocks::isWaterLoggable($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ()))) ||
-				($decay !== 0 && !WaterLoggableBlocks::isFlowingWaterLoggable($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ())))
-			)) {
-			self::getInstance()->getLogger()->debug("Fixed leftover water logging state at {$pos->getX()}, {$pos->getY()}, {$pos->getZ()}");
-			self::removeWaterLogging($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ()));
-			return false;
+		if ($validate) {
+			$decay = $id & 0x07;
+			$falling = ($id & BlockLegacyMetadata::LIQUID_FLAG_FALLING) !== 0;
+			if (($decay === 0 && !$falling && !WaterLoggableBlocks::isWaterLoggable($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ()))) ||
+				(($decay !== 0 || $falling) && !WaterLoggableBlocks::isFlowingWaterLoggable($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ())))) {
+				self::getInstance()->getLogger()->debug("Fixed leftover water logging state at {$pos->getX()}, {$pos->getY()}, {$pos->getZ()}");
+				self::removeWaterLogging($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ()));
+				return false;
+			}
 		}
-		return $decay;
+		return $id & Block::INTERNAL_METADATA_MASK;
 	}
 
 	/**
 	 * @param Block $block
 	 * @param int   $decay
+	 * @param bool  $falling
 	 */
-	public static function addWaterLogging(Block $block, int $decay = 0): void
+	public static function addWaterLogging(Block $block, int $decay = 0, bool $falling = false): void
 	{
-		self::setBlockLayerId($block, (BlockLegacyIds::FLOWING_WATER << Block::INTERNAL_METADATA_BITS) | $decay);
+		self::setBlockLayerId($block, (BlockLegacyIds::FLOWING_WATER << Block::INTERNAL_METADATA_BITS) | $decay | ($falling ? BlockLegacyMetadata::LIQUID_FLAG_FALLING : 0));
 		$block->getPosition()->getWorld()->scheduleDelayedBlockUpdate($block->getPosition(), VanillaBlocks::WATER()->tickRate());
 		$block->getPosition()->getWorld()->notifyNeighbourBlockUpdate($block->getPosition());
 	}
