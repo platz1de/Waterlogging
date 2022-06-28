@@ -30,6 +30,7 @@ class WaterLogging extends PluginBase
 	{
 		self::setInstance($this);
 		BlockFactory::getInstance()->register(self::$water = new Water(new BlockIdentifierFlattened(BlockLegacyIds::FLOWING_WATER, [BlockLegacyIds::STILL_WATER], 0), "Water", BreakInfo::indestructible(500.0)), true);
+		BlockFactory::getInstance()->register(new Lava(new BlockIdentifierFlattened(BlockLegacyIds::FLOWING_LAVA, [BlockLegacyIds::STILL_LAVA], 0), "Lava", BreakInfo::indestructible(500.0)), true);
 	}
 
 	public function onEnable(): void

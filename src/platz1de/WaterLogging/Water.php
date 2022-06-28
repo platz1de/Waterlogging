@@ -20,7 +20,6 @@ class Water extends PMWater
 	private bool $isWaterLoggedBlock = false;
 
 	//TODO: Entity movement (never happening probably)
-	//TODO: obsidian...
 	public function onScheduledUpdate($isWaterLogged = false): void
 	{
 		$this->isWaterLoggedBlock = $isWaterLogged;
