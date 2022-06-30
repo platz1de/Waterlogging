@@ -9,7 +9,7 @@ Pretty much like in vanilla, if you want a detailed list:
 - Add or remove waterlogging using Buckets
 - place blocks in water to waterlog them
 - break waterlogged blocks to free the water
-- Waterlogged blocks act like a normal water source
+- Waterlogged blocks act like normal water sources
   - spreads water to nearby blocks
   - hardens lava to cobblestone or obsidian
   - stairs and slabs can be used to restrict waterflow
@@ -19,6 +19,6 @@ Pretty much like in vanilla, if you want a detailed list:
 Note: Entity movement caused by flowing water logged blocks is NOT implemented and probably never will.
 
 ## Removing this plugin
-This plugin uses blocklayers to store information, while this is the intended storage by mojang, it is only poorly supported by pocketmine.<br>
-Removing this plugin will NOT remove waterlogged blocks. They remain saved in your world wothout any functionallity. <br>
+This plugin uses block layers to store information, while this is the intended storage by mojang, it is only poorly supported by pocketmine.<br>
+Removing this plugin will NOT remove waterlogged blocks. They remain saved in your world without any functionality. <br>
 A plugin to remove all waterlogged blocks will follow soon.
