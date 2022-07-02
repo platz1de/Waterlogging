@@ -116,10 +116,10 @@ class WaterLogging extends PluginBase
 		if ($validate) {
 			$decay = $id & 0x07;
 			$falling = ($id & BlockLegacyMetadata::LIQUID_FLAG_FALLING) !== 0;
-			if (($decay === 0 && !$falling && !WaterLoggableBlocks::isWaterLoggable($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ()))) ||
-				(($decay !== 0 || $falling) && !WaterLoggableBlocks::isFlowingWaterLoggable($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ())))) {
+			if (($decay === 0 && !$falling && !WaterLoggableBlocks::isWaterLoggable($world->getBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ()))) ||
+				(($decay !== 0 || $falling) && !WaterLoggableBlocks::isFlowingWaterLoggable($world->getBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ())))) {
 				self::getInstance()->getLogger()->debug("Fixed leftover water logging state at {$pos->getX()}, {$pos->getY()}, {$pos->getZ()}");
-				self::removeWaterLogging($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ()));
+				self::removeWaterLogging($world->getBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ()));
 				return false;
 			}
 		}
@@ -145,6 +145,9 @@ class WaterLogging extends PluginBase
 	{
 		$pos = $block->getPosition();
 		$subChunk = $pos->getWorld()->getChunk($pos->getX() >> 4, $pos->getZ() >> 4)?->getSubChunk($pos->getY() >> 4);
+		if ($subChunk === null) {
+			return;
+		}
 		self::setBlockLayerId($block, $subChunk->getEmptyBlockId());
 		$block->getPosition()->getWorld()->scheduleDelayedBlockUpdate($block->getPosition(), VanillaBlocks::WATER()->tickRate());
 		$block->getPosition()->getWorld()->notifyNeighbourBlockUpdate($block->getPosition());
@@ -177,6 +180,7 @@ class WaterLogging extends PluginBase
 		}
 		if (!isset($subChunk->getBlockLayers()[self::WATERLOGGING_LAYER])) {
 			(function () {
+				/** @phpstan-ignore-next-line */
 				$this->blockLayers[WaterLogging::WATERLOGGING_LAYER] = new PalettedBlockArray($this->emptyBlockId);
 			})->call($subChunk);
 		}

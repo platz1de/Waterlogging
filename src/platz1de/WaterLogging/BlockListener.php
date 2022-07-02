@@ -13,6 +13,9 @@ use pocketmine\world\World;
 class BlockListener implements ChunkListener
 {
 	private World $world;
+	/**
+	 * @var BlockListener[]
+	 */
 	public static array $listeners = [];
 
 	/**
