@@ -2,6 +2,8 @@
 
 namespace platz1de\WaterLogging;
 
+use platz1de\WaterLogging\block\Lava;
+use platz1de\WaterLogging\block\Water;
 use pocketmine\block\Block;
 use pocketmine\block\BlockBreakInfo as BreakInfo;
 use pocketmine\block\BlockFactory;
@@ -66,7 +68,7 @@ class WaterLogging extends PluginBase
 
 	/**
 	 * @param Block $block
-	 * @return bool Whether the block is waterlogged
+	 * @return bool Whether the block is waterlogged by a source block
 	 */
 	public static function isSourceWaterLogged(Block $block): bool
 	{
@@ -77,7 +79,7 @@ class WaterLogging extends PluginBase
 	 * @param World   $world
 	 * @param Vector3 $pos
 	 * @param bool    $validate
-	 * @return bool Whether the block is waterlogged
+	 * @return bool Whether the block is waterlogged by a source block
 	 */
 	public static function isSourceWaterLoggedAt(World $world, Vector3 $pos, bool $validate = true): bool
 	{
@@ -88,7 +90,7 @@ class WaterLogging extends PluginBase
 	 * @param World   $world
 	 * @param Vector3 $pos
 	 * @param bool    $validate Whether to validate if the block is even able to be waterlogged
-	 * @return int|false
+	 * @return int|false decay of waterlogged block or false if not waterlogged
 	 */
 	public static function getWaterDecayAt(World $world, Vector3 $pos, bool $validate = true): int|false
 	{
@@ -100,7 +102,7 @@ class WaterLogging extends PluginBase
 	 * @param World   $world
 	 * @param Vector3 $pos
 	 * @param bool    $validate Whether to validate if the block is even able to be waterlogged
-	 * @return int|false
+	 * @return int|false metadata of waterlogged block or false if not waterlogged
 	 */
 	public static function getWaterDataAt(World $world, Vector3 $pos, bool $validate = true): int|false
 	{
@@ -191,7 +193,7 @@ class WaterLogging extends PluginBase
 	 * @param World   $world
 	 * @param Vector3 $pos
 	 */
-	public static function sendUpdate(World $world, Vector3 $pos): void
+	private static function sendUpdate(World $world, Vector3 $pos): void
 	{
 		$layer = self::getBlockLayer($world, $pos);
 		$id = RuntimeBlockMapping::getInstance()->toRuntimeId($layer->get($pos->getX() & 0x0f, $pos->getY() & 0x0f, $pos->getZ() & 0x0f));

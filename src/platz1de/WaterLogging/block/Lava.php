@@ -1,7 +1,8 @@
 <?php
 
-namespace platz1de\WaterLogging;
+namespace platz1de\WaterLogging\block;
 
+use platz1de\WaterLogging\WaterLogging;
 use pocketmine\block\Lava as PMLava;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\math\Facing;

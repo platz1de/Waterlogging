@@ -1,7 +1,9 @@
 <?php
 
-namespace platz1de\WaterLogging;
+namespace platz1de\WaterLogging\block;
 
+use platz1de\WaterLogging\WaterLoggableBlocks;
+use platz1de\WaterLogging\WaterLogging;
 use pocketmine\block\Block;
 use pocketmine\block\Liquid;
 use pocketmine\block\VanillaBlocks;
