@@ -48,7 +48,7 @@ class Water extends PMWater
 			$minAdjacentSources = $this->getMinAdjacentSourcesToFormSource();
 			if ($minAdjacentSources !== null && $adjacent >= $minAdjacentSources) {
 				$bottomBlock = $this->position->getWorld()->getBlockAt($this->position->getFloorX(), $this->position->getFloorY() - 1, $this->position->getFloorZ());
-				if ($bottomBlock->isSolid() || ($bottomBlock instanceof Liquid && $bottomBlock->isSameType($this) && $bottomBlock->isSource())) {
+				if ($bottomBlock->isSolid() || ($bottomBlock instanceof Liquid && $bottomBlock->hasSameTypeId($this) && $bottomBlock->isSource())) {
 					$decay = 0;
 					$falling = false;
 				}
@@ -136,7 +136,7 @@ class Water extends PMWater
 	private function getSmallestDecay(Vector3 $pos, int $face, int &$decay, int &$sources): void
 	{
 		$block = $this->position->getWorld()->getBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ());
-		if ($block instanceof Liquid && $block->isSameType($this)) {
+		if ($block instanceof Liquid && $block->hasSameTypeId($this)) {
 			$blockDecay = $block->decay;
 
 			if ($block->isSource()) {

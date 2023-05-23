@@ -5,18 +5,19 @@ namespace platz1de\WaterLogging;
 use platz1de\WaterLogging\block\Lava;
 use platz1de\WaterLogging\block\Water;
 use pocketmine\block\Block;
-use pocketmine\block\BlockBreakInfo as BreakInfo;
-use pocketmine\block\BlockFactory;
-use pocketmine\block\BlockIdentifierFlattened;
-use pocketmine\block\BlockLegacyIds;
-use pocketmine\block\BlockLegacyMetadata;
+use pocketmine\block\BlockTypeIds;
+use pocketmine\block\BlockTypeInfo;
+use pocketmine\block\RuntimeBlockStateRegistry;
 use pocketmine\block\VanillaBlocks;
+use pocketmine\data\bedrock\block\BlockStateNames;
 use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\nbt\tag\IntTag;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\types\BlockPosition;
 use pocketmine\network\mcpe\protocol\UpdateBlockPacket;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\SingletonTrait;
+use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use pocketmine\world\format\PalettedBlockArray;
 use pocketmine\world\World;
 use UnexpectedValueException;
@@ -31,8 +32,16 @@ class WaterLogging extends PluginBase
 	public function onLoad(): void
 	{
 		self::setInstance($this);
-		BlockFactory::getInstance()->register(self::$water = new Water(new BlockIdentifierFlattened(BlockLegacyIds::FLOWING_WATER, [BlockLegacyIds::STILL_WATER], 0), "Water", BreakInfo::indestructible(500.0)), true);
-		BlockFactory::getInstance()->register(new Lava(new BlockIdentifierFlattened(BlockLegacyIds::FLOWING_LAVA, [BlockLegacyIds::STILL_LAVA], 0), "Lava", BreakInfo::indestructible(500.0)), true);
+		//Very hacky way to overwrite the fluid blocks, sadly there is no official way to do this anymore
+		//As our blocks are pretty much only listeners (because of missing events :/),
+		// there shouldn't be any unexpected behaviour (except if another plugin tries to do exactly the same or accesses protected methods via reflections)
+		$registry = RuntimeBlockStateRegistry::getInstance();
+		(function () {
+			/** @noinspection all */
+			unset($this->typeIndex[BlockTypeIds::WATER], $this->typeIndex[BlockTypeIds::LAVA]); //"free up" the ids
+		})->call($registry);
+		$registry->register(self::$water = new Water(VanillaBlocks::WATER()->getIdInfo(), "Water", new BlockTypeInfo(VanillaBlocks::WATER()->getBreakInfo(), VanillaBlocks::WATER()->getTypeTags())));
+		$registry->register(new Lava(VanillaBlocks::LAVA()->getIdInfo(), "Lava", new BlockTypeInfo(VanillaBlocks::LAVA()->getBreakInfo(), VanillaBlocks::LAVA()->getTypeTags())));
 	}
 
 	public function onEnable(): void
@@ -112,12 +121,18 @@ class WaterLogging extends PluginBase
 			return false; // Water can attempt to flow next to unloaded chunks
 		}
 		$id = $layer->get($pos->getX() & 0x0f, $pos->getY() & 0x0f, $pos->getZ() & 0x0f);
-		if ($id >> Block::INTERNAL_METADATA_BITS !== BlockLegacyIds::FLOWING_WATER) {
+		if ($id >> Block::INTERNAL_STATE_DATA_BITS !== BlockTypeIds::WATER) {
 			return false;
 		}
 		if ($validate) {
-			$decay = $id & 0x07;
-			$falling = ($id & BlockLegacyMetadata::LIQUID_FLAG_FALLING) !== 0;
+			//We expect this to return a water block, as we already checked the block type
+			$tag = GlobalBlockStateHandlers::getSerializer()->serialize($id)->getState(BlockStateNames::LIQUID_DEPTH);
+			if (!$tag instanceof IntTag) {
+				return false;
+			}
+			$blockData = $tag->getValue();
+			$decay = $blockData & 0x07;
+			$falling = ($blockData & 0x08) !== 0;
 			if (($decay === 0 && !$falling && !WaterLoggableBlocks::isWaterLoggable($world->getBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ()))) ||
 				(($decay !== 0 || $falling) && !WaterLoggableBlocks::isFlowingWaterLoggable($world->getBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ())))) {
 				self::getInstance()->getLogger()->debug("Fixed leftover water logging state at {$pos->getX()}, {$pos->getY()}, {$pos->getZ()}");
@@ -125,7 +140,7 @@ class WaterLogging extends PluginBase
 				return false;
 			}
 		}
-		return $id & Block::INTERNAL_METADATA_MASK;
+		return $id & Block::INTERNAL_STATE_DATA_MASK;
 	}
 
 	/**
@@ -135,7 +150,7 @@ class WaterLogging extends PluginBase
 	 */
 	public static function addWaterLogging(Block $block, int $decay = 0, bool $falling = false): void
 	{
-		self::setBlockLayerId($block, (BlockLegacyIds::FLOWING_WATER << Block::INTERNAL_METADATA_BITS) | $decay | ($falling ? BlockLegacyMetadata::LIQUID_FLAG_FALLING : 0));
+		self::setBlockLayerId($block, VanillaBlocks::WATER()->setFalling($falling)->setDecay($decay)->getStateId());
 		$block->getPosition()->getWorld()->scheduleDelayedBlockUpdate($block->getPosition(), VanillaBlocks::WATER()->tickRate());
 		$block->getPosition()->getWorld()->notifyNeighbourBlockUpdate($block->getPosition());
 	}
@@ -182,7 +197,6 @@ class WaterLogging extends PluginBase
 		}
 		if (!isset($subChunk->getBlockLayers()[self::WATERLOGGING_LAYER])) {
 			(function () {
-				/** @phpstan-ignore-next-line */
 				$this->blockLayers[WaterLogging::WATERLOGGING_LAYER] = new PalettedBlockArray($this->emptyBlockId);
 			})->call($subChunk);
 		}
@@ -196,7 +210,7 @@ class WaterLogging extends PluginBase
 	private static function sendUpdate(World $world, Vector3 $pos): void
 	{
 		$layer = self::getBlockLayer($world, $pos);
-		$id = RuntimeBlockMapping::getInstance()->toRuntimeId($layer->get($pos->getX() & 0x0f, $pos->getY() & 0x0f, $pos->getZ() & 0x0f));
+		$id = TypeConverter::getInstance()->getBlockTranslator()->internalIdToNetworkId($layer->get($pos->getX() & 0x0f, $pos->getY() & 0x0f, $pos->getZ() & 0x0f));
 		$packet = UpdateBlockPacket::create(BlockPosition::fromVector3($pos), $id, UpdateBlockPacket::FLAG_NETWORK, UpdateBlockPacket::DATA_LAYER_LIQUID);
 		foreach ($world->getViewersForPosition($pos) as $player) {
 			$player->getNetworkSession()->sendDataPacket($packet);

@@ -2,6 +2,7 @@
 
 namespace platz1de\WaterLogging;
 
+use pocketmine\block\Block;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\block\Water;
 use pocketmine\event\block\BlockPlaceEvent;
@@ -72,12 +73,16 @@ class EventListener implements Listener
 	 */
 	public function onPlace(BlockPlaceEvent $event): void
 	{
-		$block = $event->getBlockReplaced();
-		if ($block instanceof Water && (
-				($block->isSource() && WaterLoggableBlocks::isWaterLoggable($event->getBlock())) ||
-				(!$block->isSource() && WaterLoggableBlocks::isFlowingWaterLoggable($event->getBlock()))
-			)) {
-			WaterLogging::addWaterLogging($event->getBlock(), $block->getDecay(), $block->isFalling());
+		foreach ($event->getTransaction()->getBlocks() as $b) {
+			/** @var Block $new */
+			$new = $b[3];
+			$old = $new->getPosition()->getWorld()->getBlockAt($b[0], $b[1], $b[2]);
+			if ($old instanceof Water && (
+					($old->isSource() && WaterLoggableBlocks::isWaterLoggable($new)) ||
+					(!$old->isSource() && WaterLoggableBlocks::isFlowingWaterLoggable($new))
+				)) {
+				WaterLogging::addWaterLogging($new, $old->getDecay(), $old->isFalling());
+			}
 		}
 	}
 

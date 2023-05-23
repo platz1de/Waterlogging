@@ -3,7 +3,6 @@
 namespace platz1de\WaterLogging;
 
 use pocketmine\block\Air;
-use pocketmine\block\BlockLegacyMetadata;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\math\Vector3;
 use pocketmine\world\ChunkListener;
@@ -66,7 +65,7 @@ class BlockListener implements ChunkListener
 			)) {
 			if ($b instanceof Air) {
 				$data = WaterLogging::getWaterDataAt($this->world, $block, false);
-				$this->world->setBlock($block, VanillaBlocks::WATER()->setDecay($data & 0x07)->setFalling(($data & BlockLegacyMetadata::LIQUID_FLAG_FALLING) !== 0));
+				$this->world->setBlock($block, VanillaBlocks::WATER()->setDecay($data & 0x07)->setFalling(($data & 0x08) !== 0));
 			}
 			WaterLogging::removeWaterLogging($b);
 		}

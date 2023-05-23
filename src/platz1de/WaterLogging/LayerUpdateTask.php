@@ -2,7 +2,6 @@
 
 namespace platz1de\WaterLogging;
 
-use pocketmine\block\BlockLegacyMetadata;
 use pocketmine\math\Vector3;
 use pocketmine\scheduler\Task;
 use pocketmine\Server;
@@ -44,7 +43,7 @@ class LayerUpdateTask extends Task
 		if (WaterLogging::isWaterLoggedAt($world, $pos)) {
 			$data = WaterLogging::getWaterDataAt($world, $pos);
 			$block = WaterLogging::WATER()->setDecay($data & 0x07);
-			$block->setFalling(($data & BlockLegacyMetadata::LIQUID_FLAG_FALLING) !== 0);
+			$block->setFalling(($data & 0x08) !== 0);
 			$block->position($world, $pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ());
 			$block->onScheduledUpdate(true);
 		}

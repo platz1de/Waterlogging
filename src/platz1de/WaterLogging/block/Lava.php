@@ -21,7 +21,7 @@ class Lava extends PMLava
 			}
 			$blockSide = $this->getSide($side);
 			//Even blocked water logged faces can harden lava
-			if ($blockSide instanceof Water || WaterLogging::isWaterLogged($blockSide)) {
+			if (WaterLogging::isWaterLogged($blockSide)) {
 				$colliding = $blockSide;
 				break;
 			}
@@ -39,6 +39,6 @@ class Lava extends PMLava
 			}
 		}
 
-		return false;
+		return parent::checkForHarden();
 	}
 }

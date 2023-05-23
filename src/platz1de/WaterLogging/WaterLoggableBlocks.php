@@ -2,75 +2,362 @@
 
 namespace platz1de\WaterLogging;
 
-use pocketmine\block\Bamboo;
-use pocketmine\block\BaseRail;
-use pocketmine\block\Beacon;
 use pocketmine\block\Block;
-use pocketmine\block\BlockLegacyIds;
-use pocketmine\block\Button;
-use pocketmine\block\Carpet;
-use pocketmine\block\Cobweb;
-use pocketmine\block\CocoaBlock;
-use pocketmine\block\DeadBush;
-use pocketmine\block\DragonEgg;
-use pocketmine\block\EndRod;
-use pocketmine\block\Flowable;
-use pocketmine\block\FlowerPot;
-use pocketmine\block\ItemFrame;
-use pocketmine\block\Leaves;
-use pocketmine\block\Lever;
-use pocketmine\block\Liquid;
-use pocketmine\block\MonsterSpawner;
-use pocketmine\block\NetherPortal;
-use pocketmine\block\RedstoneComparator;
-use pocketmine\block\RedstoneRepeater;
-use pocketmine\block\ShulkerBox;
-use pocketmine\block\Skull;
+use pocketmine\block\BlockTypeIds;
 use pocketmine\block\Slab;
-use pocketmine\block\SoulSand;
 use pocketmine\block\Stair;
-use pocketmine\block\Tripwire;
-use pocketmine\block\TripwireHook;
 use pocketmine\block\utils\SupportType;
-use pocketmine\block\Vine;
 
-//Fun with instance checks ...
+//Fun with type ids...
 class WaterLoggableBlocks
 {
+	/**
+	 * @var int[]
+	 */
+	private static array $waterLoggable = [
+		BlockTypeIds::ACTIVATOR_RAIL,
+		//Amethyst Cluster
+		BlockTypeIds::ANVIL,
+		//Azalea
+		BlockTypeIds::BANNER,
+		BlockTypeIds::WALL_BANNER,
+		BlockTypeIds::BARRIER,
+		BlockTypeIds::BEACON,
+		BlockTypeIds::BED,
+		BlockTypeIds::BELL,
+		//Big Dripleaf
+		BlockTypeIds::BREWING_STAND,
+
+		BlockTypeIds::STONE_BUTTON,
+		BlockTypeIds::OAK_BUTTON,
+		BlockTypeIds::SPRUCE_BUTTON,
+		BlockTypeIds::BIRCH_BUTTON,
+		BlockTypeIds::JUNGLE_BUTTON,
+		BlockTypeIds::ACACIA_BUTTON,
+		BlockTypeIds::DARK_OAK_BUTTON,
+		BlockTypeIds::MANGROVE_BUTTON,
+		//Bamboo Button
+		//Cherry Button
+		BlockTypeIds::CRIMSON_BUTTON,
+		BlockTypeIds::WARPED_BUTTON,
+		BlockTypeIds::POLISHED_BLACKSTONE_BUTTON,
+
+		BlockTypeIds::CACTUS,
+		BlockTypeIds::CAKE,
+		//Campfire / Soul Campfire
+		BlockTypeIds::CANDLE,
+		BlockTypeIds::CARPET,
+		BlockTypeIds::CAULDRON,
+
+		BlockTypeIds::WATER_CAULDRON,
+		BlockTypeIds::LAVA_CAULDRON,
+		BlockTypeIds::POTION_CAULDRON,
+		BlockTypeIds::POWDER_SNOW_CAULDRON,
+
+		BlockTypeIds::CHAIN,
+		BlockTypeIds::CHEST,
+		BlockTypeIds::TRAPPED_CHEST,
+		BlockTypeIds::COBWEB,
+		//Composter
+		//Conduit
+		BlockTypeIds::CORAL,
+		BlockTypeIds::CORAL_FAN,
+		BlockTypeIds::WALL_CORAL_FAN,
+		BlockTypeIds::DAYLIGHT_SENSOR,
+		BlockTypeIds::DEAD_BUSH,
+		//Decorated Coral Fan
+		BlockTypeIds::DETECTOR_RAIL,
+
+		BlockTypeIds::IRON_DOOR,
+		BlockTypeIds::OAK_DOOR,
+		BlockTypeIds::SPRUCE_DOOR,
+		BlockTypeIds::BIRCH_DOOR,
+		BlockTypeIds::JUNGLE_DOOR,
+		BlockTypeIds::ACACIA_DOOR,
+		BlockTypeIds::DARK_OAK_DOOR,
+		BlockTypeIds::MANGROVE_DOOR,
+		//Bamboo Door
+		//Cherry Door
+		BlockTypeIds::CRIMSON_DOOR,
+		BlockTypeIds::WARPED_DOOR,
+
+		BlockTypeIds::DRAGON_EGG,
+		BlockTypeIds::ENCHANTING_TABLE,
+		BlockTypeIds::ENDER_CHEST,
+
+		BlockTypeIds::OAK_FENCE,
+		BlockTypeIds::SPRUCE_FENCE,
+		BlockTypeIds::BIRCH_FENCE,
+		BlockTypeIds::JUNGLE_FENCE,
+		BlockTypeIds::ACACIA_FENCE,
+		BlockTypeIds::DARK_OAK_FENCE,
+		BlockTypeIds::MANGROVE_FENCE,
+		//Bamboo Fence
+		//Cherry Fence
+		BlockTypeIds::CRIMSON_FENCE,
+		BlockTypeIds::WARPED_FENCE,
+		BlockTypeIds::NETHER_BRICK_FENCE,
+
+		BlockTypeIds::OAK_FENCE_GATE,
+		BlockTypeIds::SPRUCE_FENCE_GATE,
+		BlockTypeIds::BIRCH_FENCE_GATE,
+		BlockTypeIds::JUNGLE_FENCE_GATE,
+		BlockTypeIds::ACACIA_FENCE_GATE,
+		BlockTypeIds::DARK_OAK_FENCE_GATE,
+		BlockTypeIds::MANGROVE_FENCE_GATE,
+		//Bamboo Fence Gate
+		//Cherry Fence Gate
+		BlockTypeIds::CRIMSON_FENCE_GATE,
+		BlockTypeIds::WARPED_FENCE_GATE,
+
+		BlockTypeIds::FLOWER_POT,
+		//Flowering Azalea
+		BlockTypeIds::GLASS_PANE,
+		BlockTypeIds::STAINED_GLASS_PANE,
+		//Glow Lichen
+		//Grindstone
+		BlockTypeIds::HARDENED_GLASS_PANE,
+		BlockTypeIds::HOPPER,
+		BlockTypeIds::IRON_BARS,
+		BlockTypeIds::ITEM_FRAME,
+		BlockTypeIds::LADDER,
+		BlockTypeIds::LANTERN,
+		BlockTypeIds::SOUL_LANTERN,
+
+		BlockTypeIds::OAK_LEAVES,
+		BlockTypeIds::SPRUCE_LEAVES,
+		BlockTypeIds::BIRCH_LEAVES,
+		BlockTypeIds::JUNGLE_LEAVES,
+		BlockTypeIds::ACACIA_LEAVES,
+		BlockTypeIds::DARK_OAK_LEAVES,
+		BlockTypeIds::MANGROVE_LEAVES,
+		//Cherry Leaves
+		BlockTypeIds::AZALEA_LEAVES,
+		BlockTypeIds::FLOWERING_AZALEA_LEAVES,
+
+		BlockTypeIds::LECTERN,
+		BlockTypeIds::LIGHTNING_ROD,
+		BlockTypeIds::MANGROVE_ROOTS,
+		BlockTypeIds::MOB_HEAD,
+		//Piston / Piston Head
+		//Pointed Dripstone
+		BlockTypeIds::POWERED_RAIL,
+
+		BlockTypeIds::WEIGHTED_PRESSURE_PLATE_LIGHT,
+		BlockTypeIds::WEIGHTED_PRESSURE_PLATE_HEAVY,
+		BlockTypeIds::STONE_PRESSURE_PLATE,
+		BlockTypeIds::POLISHED_BLACKSTONE_PRESSURE_PLATE,
+		BlockTypeIds::OAK_PRESSURE_PLATE,
+		BlockTypeIds::SPRUCE_PRESSURE_PLATE,
+		BlockTypeIds::BIRCH_PRESSURE_PLATE,
+		BlockTypeIds::JUNGLE_PRESSURE_PLATE,
+		BlockTypeIds::ACACIA_PRESSURE_PLATE,
+		BlockTypeIds::DARK_OAK_PRESSURE_PLATE,
+		BlockTypeIds::MANGROVE_PRESSURE_PLATE,
+		//Bamboo Pressure Plate
+		//Cherry Pressure Plate
+		BlockTypeIds::CRIMSON_PRESSURE_PLATE,
+		BlockTypeIds::WARPED_PRESSURE_PLATE,
+
+		BlockTypeIds::RAIL,
+		//Scaffolding
+		//Skulk Sensor
+		//Skulk Shrieker
+		//Skulk Vein
+		BlockTypeIds::SEA_PICKLE,
+		BlockTypeIds::SHULKER_BOX,
+		BlockTypeIds::DYED_SHULKER_BOX,
+
+		BlockTypeIds::OAK_SIGN,
+		BlockTypeIds::OAK_WALL_SIGN,
+		BlockTypeIds::SPRUCE_SIGN,
+		BlockTypeIds::SPRUCE_WALL_SIGN,
+		BlockTypeIds::BIRCH_SIGN,
+		BlockTypeIds::BIRCH_WALL_SIGN,
+		BlockTypeIds::JUNGLE_SIGN,
+		BlockTypeIds::JUNGLE_WALL_SIGN,
+		BlockTypeIds::ACACIA_SIGN,
+		BlockTypeIds::ACACIA_WALL_SIGN,
+		BlockTypeIds::DARK_OAK_SIGN,
+		BlockTypeIds::DARK_OAK_WALL_SIGN,
+		BlockTypeIds::MANGROVE_SIGN,
+		BlockTypeIds::MANGROVE_WALL_SIGN,
+		//Bamboo Sign
+		//Cherry Sign
+		BlockTypeIds::CRIMSON_SIGN,
+		BlockTypeIds::CRIMSON_WALL_SIGN,
+		BlockTypeIds::WARPED_SIGN,
+		BlockTypeIds::WARPED_WALL_SIGN,
+
+		BlockTypeIds::OAK_SLAB,
+		BlockTypeIds::SPRUCE_SLAB,
+		BlockTypeIds::BIRCH_SLAB,
+		BlockTypeIds::JUNGLE_SLAB,
+		BlockTypeIds::ACACIA_SLAB,
+		BlockTypeIds::DARK_OAK_SLAB,
+		BlockTypeIds::MANGROVE_SLAB,
+		//Bamboo Slab
+		//Cherry Slab
+		BlockTypeIds::CRIMSON_SLAB,
+		BlockTypeIds::WARPED_SLAB,
+		BlockTypeIds::STONE_SLAB,
+		BlockTypeIds::SMOOTH_STONE_SLAB,
+		BlockTypeIds::GRANITE_SLAB,
+		BlockTypeIds::POLISHED_GRANITE_SLAB,
+		BlockTypeIds::DIORITE_SLAB,
+		BlockTypeIds::POLISHED_DIORITE_SLAB,
+		BlockTypeIds::ANDESITE_SLAB,
+		BlockTypeIds::POLISHED_ANDESITE_SLAB,
+		BlockTypeIds::COBBLESTONE_SLAB,
+		BlockTypeIds::MOSSY_COBBLESTONE_SLAB,
+		BlockTypeIds::STONE_BRICK_SLAB,
+		BlockTypeIds::MOSSY_STONE_BRICK_SLAB,
+		BlockTypeIds::BRICK_SLAB,
+		BlockTypeIds::END_STONE_BRICK_SLAB,
+		BlockTypeIds::NETHER_BRICK_SLAB,
+		BlockTypeIds::RED_NETHER_BRICK_SLAB,
+		BlockTypeIds::SANDSTONE_SLAB,
+		BlockTypeIds::CUT_SANDSTONE_SLAB,
+		BlockTypeIds::SMOOTH_SANDSTONE_SLAB,
+		BlockTypeIds::RED_SANDSTONE_SLAB,
+		BlockTypeIds::CUT_RED_SANDSTONE_SLAB,
+		BlockTypeIds::SMOOTH_RED_SANDSTONE_SLAB,
+		BlockTypeIds::QUARTZ_SLAB,
+		BlockTypeIds::SMOOTH_QUARTZ_SLAB,
+		BlockTypeIds::PURPUR_SLAB,
+		BlockTypeIds::PRISMARINE_SLAB,
+		BlockTypeIds::PRISMARINE_BRICKS_SLAB,
+		BlockTypeIds::DARK_PRISMARINE_SLAB,
+		BlockTypeIds::BLACKSTONE_SLAB,
+		BlockTypeIds::POLISHED_BLACKSTONE_SLAB,
+		BlockTypeIds::POLISHED_BLACKSTONE_BRICK_SLAB,
+		BlockTypeIds::CUT_COPPER_SLAB,
+		//Copper variants
+		BlockTypeIds::COBBLED_DEEPSLATE_SLAB,
+		BlockTypeIds::POLISHED_DEEPSLATE_SLAB,
+		BlockTypeIds::DEEPSLATE_BRICK_SLAB,
+		BlockTypeIds::DEEPSLATE_TILE_SLAB,
+		BlockTypeIds::FAKE_WOODEN_SLAB,
+
+		//Small Dripleaf
+		BlockTypeIds::MONSTER_SPAWNER,
+
+		BlockTypeIds::OAK_STAIRS,
+		BlockTypeIds::SPRUCE_STAIRS,
+		BlockTypeIds::BIRCH_STAIRS,
+		BlockTypeIds::JUNGLE_STAIRS,
+		BlockTypeIds::ACACIA_STAIRS,
+		BlockTypeIds::DARK_OAK_STAIRS,
+		BlockTypeIds::MANGROVE_STAIRS,
+		//Bamboo Stairs
+		//Cherry Stairs
+		BlockTypeIds::CRIMSON_STAIRS,
+		BlockTypeIds::WARPED_STAIRS,
+		BlockTypeIds::STONE_STAIRS,
+		BlockTypeIds::GRANITE_STAIRS,
+		BlockTypeIds::POLISHED_GRANITE_STAIRS,
+		BlockTypeIds::DIORITE_STAIRS,
+		BlockTypeIds::POLISHED_DIORITE_STAIRS,
+		BlockTypeIds::ANDESITE_STAIRS,
+		BlockTypeIds::POLISHED_ANDESITE_STAIRS,
+		BlockTypeIds::COBBLESTONE_STAIRS,
+		BlockTypeIds::MOSSY_COBBLESTONE_STAIRS,
+		BlockTypeIds::STONE_BRICK_STAIRS,
+		BlockTypeIds::MOSSY_STONE_BRICK_STAIRS,
+		BlockTypeIds::BRICK_STAIRS,
+		BlockTypeIds::END_STONE_BRICK_STAIRS,
+		BlockTypeIds::NETHER_BRICK_STAIRS,
+		BlockTypeIds::RED_NETHER_BRICK_STAIRS,
+		BlockTypeIds::SANDSTONE_STAIRS,
+		BlockTypeIds::SMOOTH_SANDSTONE_STAIRS,
+		BlockTypeIds::RED_SANDSTONE_STAIRS,
+		BlockTypeIds::SMOOTH_RED_SANDSTONE_STAIRS,
+		BlockTypeIds::QUARTZ_STAIRS,
+		BlockTypeIds::SMOOTH_QUARTZ_STAIRS,
+		BlockTypeIds::PURPUR_STAIRS,
+		BlockTypeIds::PRISMARINE_STAIRS,
+		BlockTypeIds::PRISMARINE_BRICKS_STAIRS,
+		BlockTypeIds::DARK_PRISMARINE_STAIRS,
+		BlockTypeIds::BLACKSTONE_STAIRS,
+		BlockTypeIds::POLISHED_BLACKSTONE_STAIRS,
+		BlockTypeIds::POLISHED_BLACKSTONE_BRICK_STAIRS,
+		BlockTypeIds::CUT_COPPER_STAIRS,
+		//Copper variants
+		BlockTypeIds::COBBLED_DEEPSLATE_STAIRS,
+		BlockTypeIds::POLISHED_DEEPSLATE_STAIRS,
+		BlockTypeIds::DEEPSLATE_BRICK_STAIRS,
+		BlockTypeIds::DEEPSLATE_TILE_STAIRS,
+
+		//Structure Block
+		BlockTypeIds::STONECUTTER,
+
+		BlockTypeIds::IRON_TRAPDOOR,
+		BlockTypeIds::OAK_TRAPDOOR,
+		BlockTypeIds::SPRUCE_TRAPDOOR,
+		BlockTypeIds::BIRCH_TRAPDOOR,
+		BlockTypeIds::JUNGLE_TRAPDOOR,
+		BlockTypeIds::ACACIA_TRAPDOOR,
+		BlockTypeIds::DARK_OAK_TRAPDOOR,
+		BlockTypeIds::MANGROVE_TRAPDOOR,
+		//Bamboo Trapdoor
+		//Cherry Trapdoor
+		BlockTypeIds::CRIMSON_TRAPDOOR,
+		BlockTypeIds::WARPED_TRAPDOOR,
+
+		//Turtle Egg
+		BlockTypeIds::UNDERWATER_TORCH,
+		BlockTypeIds::VINES,
+
+		BlockTypeIds::COBBLESTONE_WALL,
+		BlockTypeIds::MOSSY_COBBLESTONE_WALL,
+		BlockTypeIds::STONE_BRICK_WALL,
+		BlockTypeIds::MOSSY_STONE_BRICK_WALL,
+		BlockTypeIds::ANDESITE_WALL,
+		BlockTypeIds::DIORITE_WALL,
+		BlockTypeIds::GRANITE_WALL,
+		BlockTypeIds::SANDSTONE_WALL,
+		BlockTypeIds::RED_SANDSTONE_WALL,
+		BlockTypeIds::BRICK_WALL,
+		BlockTypeIds::PRISMARINE_WALL,
+		BlockTypeIds::NETHER_BRICK_WALL,
+		BlockTypeIds::RED_NETHER_BRICK_WALL,
+		BlockTypeIds::END_STONE_BRICK_WALL,
+		BlockTypeIds::BLACKSTONE_WALL,
+		BlockTypeIds::POLISHED_BLACKSTONE_WALL,
+		BlockTypeIds::POLISHED_BLACKSTONE_BRICK_WALL,
+		BlockTypeIds::COBBLED_DEEPSLATE_WALL,
+		BlockTypeIds::POLISHED_DEEPSLATE_WALL,
+		BlockTypeIds::DEEPSLATE_BRICK_WALL,
+		BlockTypeIds::DEEPSLATE_TILE_WALL,
+		BlockTypeIds::MUD_BRICK_WALL
+	];
+
+	/**
+	 * @var int[]
+	 */
+	private static array $flowingWaterLoggable = [
+		//Camera
+		BlockTypeIds::COMPOUND_CREATOR,
+		BlockTypeIds::ELEMENT_CONSTRUCTOR,
+		BlockTypeIds::END_ROD,
+		BlockTypeIds::LAB_TABLE,
+		BlockTypeIds::LEVER,
+		BlockTypeIds::LIGHT,
+		BlockTypeIds::MATERIAL_REDUCER,
+		//Mangrove Propagule
+		BlockTypeIds::REDSTONE_COMPARATOR,
+		BlockTypeIds::REDSTONE_REPEATER,
+		BlockTypeIds::TRIPWIRE,
+		BlockTypeIds::TRIPWIRE_HOOK
+	];
+
 	/**
 	 * @param Block $block
 	 * @return bool Whether the block is waterloggable
 	 */
 	public static function isWaterLoggable(Block $block): bool
 	{
-		//Note: In bedrock Edition a ton of blocks are waterloggable
-		return (!$block->isFullCube() && !$block instanceof Flowable && !(
-					//excluded blocks
-					$block instanceof Bamboo || //Bamboo just needs to be different to make it more difficult
-					$block instanceof CocoaBlock || //cocoa isn't marked as flowable in pmmp
-					$block instanceof SoulSand || //just a bit too short of a full block, but handled as one
-					$block instanceof Liquid || //obvious reasons
-					$block instanceof NetherPortal //yea...
-				)) || (self::isFlowingWaterLoggable($block) || ( //phpstorm please leave the formatting as is
-					//included blocks
-					$block instanceof Leaves ||
-					$block instanceof Button ||
-					$block instanceof Carpet ||
-					$block instanceof Cobweb ||
-					$block instanceof DeadBush ||
-					$block instanceof Vine ||
-					$block instanceof FlowerPot ||
-					$block instanceof ItemFrame ||
-					$block instanceof DragonEgg ||
-					$block instanceof Skull ||
-					$block instanceof BaseRail ||
-					$block instanceof Beacon ||
-					$block instanceof MonsterSpawner ||
-					$block instanceof ShulkerBox ||
-					$block->getId() === BlockLegacyIds::BARRIER //barriers do not have an own class :c
-				)
-			);
-
+		return in_array($block->getTypeId(), self::$waterLoggable, true) || self::isFlowingWaterLoggable($block);
 	}
 
 	/**
@@ -79,15 +366,7 @@ class WaterLoggableBlocks
 	 */
 	public static function isFlowingWaterLoggable(Block $block): bool
 	{
-		//Note: In bedrock Edition a few blocks are even water loggable by flowing water
-		return (
-			$block instanceof EndRod ||
-			$block instanceof Lever ||
-			$block instanceof RedstoneComparator ||
-			$block instanceof RedstoneRepeater ||
-			$block instanceof Tripwire ||
-			$block instanceof TripwireHook
-		);
+		return in_array($block->getTypeId(), self::$flowingWaterLoggable, true);
 	}
 
 	/**
