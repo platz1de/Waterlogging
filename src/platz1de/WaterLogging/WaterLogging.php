@@ -2,6 +2,8 @@
 
 namespace platz1de\WaterLogging;
 
+use platz1de\WaterLogging\block\Lava;
+use platz1de\WaterLogging\block\Water;
 use pocketmine\block\Block;
 use pocketmine\block\BlockBreakInfo as BreakInfo;
 use pocketmine\block\BlockFactory;
@@ -66,7 +68,7 @@ class WaterLogging extends PluginBase
 
 	/**
 	 * @param Block $block
-	 * @return bool Whether the block is waterlogged
+	 * @return bool Whether the block is waterlogged by a source block
 	 */
 	public static function isSourceWaterLogged(Block $block): bool
 	{
@@ -77,7 +79,7 @@ class WaterLogging extends PluginBase
 	 * @param World   $world
 	 * @param Vector3 $pos
 	 * @param bool    $validate
-	 * @return bool Whether the block is waterlogged
+	 * @return bool Whether the block is waterlogged by a source block
 	 */
 	public static function isSourceWaterLoggedAt(World $world, Vector3 $pos, bool $validate = true): bool
 	{
@@ -88,7 +90,7 @@ class WaterLogging extends PluginBase
 	 * @param World   $world
 	 * @param Vector3 $pos
 	 * @param bool    $validate Whether to validate if the block is even able to be waterlogged
-	 * @return int|false
+	 * @return int|false decay of waterlogged block or false if not waterlogged
 	 */
 	public static function getWaterDecayAt(World $world, Vector3 $pos, bool $validate = true): int|false
 	{
@@ -100,7 +102,7 @@ class WaterLogging extends PluginBase
 	 * @param World   $world
 	 * @param Vector3 $pos
 	 * @param bool    $validate Whether to validate if the block is even able to be waterlogged
-	 * @return int|false
+	 * @return int|false metadata of waterlogged block or false if not waterlogged
 	 */
 	public static function getWaterDataAt(World $world, Vector3 $pos, bool $validate = true): int|false
 	{
@@ -116,10 +118,10 @@ class WaterLogging extends PluginBase
 		if ($validate) {
 			$decay = $id & 0x07;
 			$falling = ($id & BlockLegacyMetadata::LIQUID_FLAG_FALLING) !== 0;
-			if (($decay === 0 && !$falling && !WaterLoggableBlocks::isWaterLoggable($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ()))) ||
-				(($decay !== 0 || $falling) && !WaterLoggableBlocks::isFlowingWaterLoggable($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ())))) {
+			if (($decay === 0 && !$falling && !WaterLoggableBlocks::isWaterLoggable($world->getBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ()))) ||
+				(($decay !== 0 || $falling) && !WaterLoggableBlocks::isFlowingWaterLoggable($world->getBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ())))) {
 				self::getInstance()->getLogger()->debug("Fixed leftover water logging state at {$pos->getX()}, {$pos->getY()}, {$pos->getZ()}");
-				self::removeWaterLogging($world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ()));
+				self::removeWaterLogging($world->getBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ()));
 				return false;
 			}
 		}
@@ -145,6 +147,9 @@ class WaterLogging extends PluginBase
 	{
 		$pos = $block->getPosition();
 		$subChunk = $pos->getWorld()->getChunk($pos->getX() >> 4, $pos->getZ() >> 4)?->getSubChunk($pos->getY() >> 4);
+		if ($subChunk === null) {
+			return;
+		}
 		self::setBlockLayerId($block, $subChunk->getEmptyBlockId());
 		$block->getPosition()->getWorld()->scheduleDelayedBlockUpdate($block->getPosition(), VanillaBlocks::WATER()->tickRate());
 		$block->getPosition()->getWorld()->notifyNeighbourBlockUpdate($block->getPosition());
@@ -177,6 +182,7 @@ class WaterLogging extends PluginBase
 		}
 		if (!isset($subChunk->getBlockLayers()[self::WATERLOGGING_LAYER])) {
 			(function () {
+				/** @phpstan-ignore-next-line */
 				$this->blockLayers[WaterLogging::WATERLOGGING_LAYER] = new PalettedBlockArray($this->emptyBlockId);
 			})->call($subChunk);
 		}
@@ -187,7 +193,7 @@ class WaterLogging extends PluginBase
 	 * @param World   $world
 	 * @param Vector3 $pos
 	 */
-	public static function sendUpdate(World $world, Vector3 $pos): void
+	private static function sendUpdate(World $world, Vector3 $pos): void
 	{
 		$layer = self::getBlockLayer($world, $pos);
 		$id = RuntimeBlockMapping::getInstance()->toRuntimeId($layer->get($pos->getX() & 0x0f, $pos->getY() & 0x0f, $pos->getZ() & 0x0f));

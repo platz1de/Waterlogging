@@ -93,7 +93,7 @@ class WaterLoggableBlocks
 	/**
 	 * @param Block $block
 	 * @param int   $facing
-	 * @return bool
+	 * @return bool Whether water is blocked from exiting the given block facing
 	 */
 	public static function blocksWaterFlow(Block $block, int $facing): bool
 	{
