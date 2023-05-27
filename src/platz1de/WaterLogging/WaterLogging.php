@@ -4,12 +4,18 @@ namespace platz1de\WaterLogging;
 
 use platz1de\WaterLogging\block\Lava;
 use platz1de\WaterLogging\block\Water;
+use platz1de\WaterLogging\item\Bucket;
+use platz1de\WaterLogging\item\LiquidBucket;
 use pocketmine\block\Block;
 use pocketmine\block\BlockTypeIds;
 use pocketmine\block\BlockTypeInfo;
 use pocketmine\block\RuntimeBlockStateRegistry;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\data\bedrock\block\BlockStateNames;
+use pocketmine\data\bedrock\item\ItemTypeNames;
+use pocketmine\item\ItemIdentifier;
+use pocketmine\item\ItemTypeIds;
+use pocketmine\item\VanillaItems;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\IntTag;
 use pocketmine\network\mcpe\convert\TypeConverter;
@@ -18,8 +24,10 @@ use pocketmine\network\mcpe\protocol\UpdateBlockPacket;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
+use pocketmine\world\format\io\GlobalItemDataHandlers;
 use pocketmine\world\format\PalettedBlockArray;
 use pocketmine\world\World;
+use ReflectionClass;
 use UnexpectedValueException;
 
 class WaterLogging extends PluginBase
@@ -32,16 +40,33 @@ class WaterLogging extends PluginBase
 	public function onLoad(): void
 	{
 		self::setInstance($this);
+
 		//Very hacky way to overwrite the fluid blocks, sadly there is no official way to do this anymore
 		//As our blocks are pretty much only listeners (because of missing events :/),
 		// there shouldn't be any unexpected behaviour (except if another plugin tries to do exactly the same or accesses protected methods via reflections)
-		$registry = RuntimeBlockStateRegistry::getInstance();
+		$blockRegistry = RuntimeBlockStateRegistry::getInstance();
 		(function () {
 			/** @noinspection all */
 			unset($this->typeIndex[BlockTypeIds::WATER], $this->typeIndex[BlockTypeIds::LAVA]); //"free up" the ids
-		})->call($registry);
-		$registry->register(self::$water = new Water(VanillaBlocks::WATER()->getIdInfo(), "Water", new BlockTypeInfo(VanillaBlocks::WATER()->getBreakInfo(), VanillaBlocks::WATER()->getTypeTags())));
-		$registry->register(new Lava(VanillaBlocks::LAVA()->getIdInfo(), "Lava", new BlockTypeInfo(VanillaBlocks::LAVA()->getBreakInfo(), VanillaBlocks::LAVA()->getTypeTags())));
+		})->call($blockRegistry);
+		$blockRegistry->register(self::$water = new Water(VanillaBlocks::WATER()->getIdInfo(), "Water", new BlockTypeInfo(VanillaBlocks::WATER()->getBreakInfo(), VanillaBlocks::WATER()->getTypeTags())));
+		$blockRegistry->register(new Lava(VanillaBlocks::LAVA()->getIdInfo(), "Lava", new BlockTypeInfo(VanillaBlocks::LAVA()->getBreakInfo(), VanillaBlocks::LAVA()->getTypeTags())));
+
+		//There is no proper way of manipulating block interactions without messing up the whole event system
+		//So we have to overwrite the default bucket items
+		$reflection = new ReflectionClass(VanillaItems::class);
+		$members = $reflection->getStaticPropertyValue("members");
+		$members["BUCKET"] = new Bucket(new ItemIdentifier(ItemTypeIds::BUCKET), "Bucket");
+		$members["WATER_BUCKET"] = new LiquidBucket(new ItemIdentifier(ItemTypeIds::WATER_BUCKET), "Water Bucket", VanillaBlocks::WATER());
+		$reflection->setStaticPropertyValue("members", $members);
+		//fix wrongly mapped deserializers
+		$itemRegistry = GlobalItemDataHandlers::getDeserializer();
+		(function () {
+			/** @noinspection all */
+			unset($this->deserializers[ItemTypeNames::BUCKET], $this->deserializers[ItemTypeNames::WATER_BUCKET]);
+		})->call($itemRegistry);
+		$itemRegistry->map(ItemTypeNames::BUCKET, fn() => clone VanillaItems::BUCKET());
+		$itemRegistry->map(ItemTypeNames::WATER_BUCKET, fn() => clone VanillaItems::WATER_BUCKET());
 	}
 
 	public function onEnable(): void
