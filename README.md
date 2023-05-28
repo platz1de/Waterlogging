@@ -3,6 +3,8 @@
 Did you ever miss waterlogging on your server? <br>
 Give your blocks all the H₂O they deserve
 
+Also supports frozen forms (snowlogging)
+
 ## Features
 
 Pretty much like in vanilla, if you want a detailed list:
@@ -15,6 +17,7 @@ Pretty much like in vanilla, if you want a detailed list:
   - stairs and slabs can be used to restrict waterflow
 - tripwires and some redstone components can be waterlogged by flowing water, no longer being destroyed
 - automatic removal of invalid waterlogged blocks (produced by other plugins)
+- snowlog small plants by placing snow layers on them or snow layers falling on them
 
 Note: Entity movement caused by flowing water logged blocks is NOT implemented and probably never will.
 
