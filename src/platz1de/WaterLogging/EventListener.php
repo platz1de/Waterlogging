@@ -28,6 +28,10 @@ class EventListener implements Listener
 	 */
 	public function onInteract(PlayerInteractEvent $event): void
 	{
+		if ($event->getAction() !== PlayerInteractEvent::RIGHT_CLICK_BLOCK) {
+			return;
+		}
+
 		if (self::$sneakHack !== null) {
 			//Small failsafe, ideally this should never happen
 			$event->getPlayer()->setSneaking(false);

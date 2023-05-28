@@ -3,6 +3,7 @@
 namespace platz1de\WaterLogging;
 
 use platz1de\WaterLogging\block\Lava;
+use platz1de\WaterLogging\block\SnowLayer;
 use platz1de\WaterLogging\block\Water;
 use platz1de\WaterLogging\item\Bucket;
 use platz1de\WaterLogging\item\LiquidBucket;
@@ -47,10 +48,11 @@ class WaterLogging extends PluginBase
 		$blockRegistry = RuntimeBlockStateRegistry::getInstance();
 		(function () {
 			/** @noinspection all */
-			unset($this->typeIndex[BlockTypeIds::WATER], $this->typeIndex[BlockTypeIds::LAVA]); //"free up" the ids
+			unset($this->typeIndex[BlockTypeIds::WATER], $this->typeIndex[BlockTypeIds::LAVA], $this->typeIndex[BlockTypeIds::SNOW_LAYER]); //"free up" the ids
 		})->call($blockRegistry);
 		$blockRegistry->register(self::$water = new Water(VanillaBlocks::WATER()->getIdInfo(), "Water", new BlockTypeInfo(VanillaBlocks::WATER()->getBreakInfo(), VanillaBlocks::WATER()->getTypeTags())));
 		$blockRegistry->register(new Lava(VanillaBlocks::LAVA()->getIdInfo(), "Lava", new BlockTypeInfo(VanillaBlocks::LAVA()->getBreakInfo(), VanillaBlocks::LAVA()->getTypeTags())));
+		$blockRegistry->register(new SnowLayer(VanillaBlocks::SNOW_LAYER()->getIdInfo(), "Snow Layer", new BlockTypeInfo(VanillaBlocks::SNOW_LAYER()->getBreakInfo(), VanillaBlocks::SNOW_LAYER()->getTypeTags())));
 
 		//There is no proper way of manipulating block interactions without messing up the whole event system
 		//So we have to overwrite the default bucket items
@@ -185,14 +187,54 @@ class WaterLogging extends PluginBase
 	 */
 	public static function removeWaterLogging(Block $block): void
 	{
+		self::clearBlockLayerId($block);
+		$block->getPosition()->getWorld()->scheduleDelayedBlockUpdate($block->getPosition(), VanillaBlocks::WATER()->tickRate());
+		$block->getPosition()->getWorld()->notifyNeighbourBlockUpdate($block->getPosition());
+	}
+
+	/**
+	 * @param Block $block
+	 * @return int|false
+	 */
+	public static function getSnowPlant(Block $block): int|false
+	{
+		try {
+			$layer = self::getBlockLayer($block->getPosition()->getWorld(), $block->getPosition());
+		} catch (UnexpectedValueException) {
+			return false; //Shouldn't happen
+		}
+		$id = $layer->get($block->getPosition()->getX() & 0x0f, $block->getPosition()->getY() & 0x0f, $block->getPosition()->getZ() & 0x0f);
+		if (!in_array($id >> Block::INTERNAL_STATE_DATA_BITS, WaterLoggableBlocks::getSnowLoggable(), true)) {
+			return false;
+		}
+		if ($block->getTypeId() !== BlockTypeIds::SNOW_LAYER) {
+			self::getInstance()->getLogger()->debug("Fixed leftover snow logging state at {$block->getPosition()->getX()}, {$block->getPosition()->getY()}, {$block->getPosition()->getZ()}");
+			self::clearBlockLayerId($block);
+			return false;
+		}
+		return $id;
+	}
+
+	/**
+	 * @param Block $block
+	 * @param int   $flower
+	 */
+	public static function addSnowLogging(Block $block, int $flower): void
+	{
+		self::setBlockLayerId($block, $flower);
+	}
+
+	/**
+	 * @param Block $block
+	 */
+	public static function clearBlockLayerId(Block $block): void
+	{
 		$pos = $block->getPosition();
 		$subChunk = $pos->getWorld()->getChunk($pos->getX() >> 4, $pos->getZ() >> 4)?->getSubChunk($pos->getY() >> 4);
 		if ($subChunk === null) {
 			return;
 		}
 		self::setBlockLayerId($block, $subChunk->getEmptyBlockId());
-		$block->getPosition()->getWorld()->scheduleDelayedBlockUpdate($block->getPosition(), VanillaBlocks::WATER()->tickRate());
-		$block->getPosition()->getWorld()->notifyNeighbourBlockUpdate($block->getPosition());
 	}
 
 	/**

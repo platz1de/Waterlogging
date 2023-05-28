@@ -352,6 +352,33 @@ class WaterLoggableBlocks
 	];
 
 	/**
+	 * @var int[]
+	 */
+	private static array $snowLoggable = [
+		BlockTypeIds::FERN,
+		//Crimson & Warped Fungus
+		BlockTypeIds::TALL_GRASS,
+		BlockTypeIds::BROWN_MUSHROOM,
+		BlockTypeIds::RED_MUSHROOM,
+		//Nether Sprouts
+		BlockTypeIds::DANDELION,
+		BlockTypeIds::POPPY,
+		BlockTypeIds::BLUE_ORCHID,
+		BlockTypeIds::ALLIUM,
+		BlockTypeIds::AZURE_BLUET,
+		BlockTypeIds::RED_TULIP,
+		BlockTypeIds::ORANGE_TULIP,
+		BlockTypeIds::WHITE_TULIP,
+		BlockTypeIds::PINK_TULIP,
+		BlockTypeIds::OXEYE_DAISY,
+		BlockTypeIds::CORNFLOWER,
+		BlockTypeIds::LILY_OF_THE_VALLEY,
+		BlockTypeIds::WITHER_ROSE,
+		//Torchflower
+		//Crimson & Warped Roots
+	];
+
+	/**
 	 * @param Block $block
 	 * @return bool Whether the block is waterloggable
 	 */
@@ -371,11 +398,28 @@ class WaterLoggableBlocks
 
 	/**
 	 * @param Block $block
+	 * @return bool Whether the block is snowloggable
+	 */
+	public static function isSnowLoggable(Block $block): bool
+	{
+		return in_array($block->getTypeId(), self::$snowLoggable, true);
+	}
+
+	/**
+	 * @param Block $block
 	 * @param int   $facing
 	 * @return bool Whether water is blocked from exiting the given block facing
 	 */
 	public static function blocksWaterFlow(Block $block, int $facing): bool
 	{
 		return ($block instanceof Slab || $block instanceof Stair) && $block->getSupportType($facing) === SupportType::FULL();
+	}
+
+	/**
+	 * @return int[]
+	 */
+	public static function getSnowLoggable(): array
+	{
+		return self::$snowLoggable;
 	}
 }

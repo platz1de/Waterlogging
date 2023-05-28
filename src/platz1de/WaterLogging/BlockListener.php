@@ -3,6 +3,7 @@
 namespace platz1de\WaterLogging;
 
 use pocketmine\block\Air;
+use pocketmine\block\BlockTypeIds;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\math\Vector3;
 use pocketmine\world\ChunkListener;
@@ -68,6 +69,8 @@ class BlockListener implements ChunkListener
 				$this->world->setBlock($block, VanillaBlocks::WATER()->setDecay($data & 0x07)->setFalling(($data & 0x08) !== 0));
 			}
 			WaterLogging::removeWaterLogging($b);
+		} elseif (WaterLogging::getSnowPlant($b = $this->world->getBlock($block)) !== false && $b->getTypeId() !== BlockTypeIds::SNOW_LAYER) {
+			WaterLogging::clearBlockLayerId($b);
 		}
 	}
 }
