@@ -2,6 +2,7 @@
 
 namespace platz1de\WaterLogging\item;
 
+use platz1de\WaterLogging\EventListener;
 use platz1de\WaterLogging\WaterLogging;
 use pocketmine\block\Block;
 use pocketmine\block\VanillaBlocks;
@@ -16,12 +17,13 @@ class Bucket extends PMBucket
 {
 	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, array &$returnedItems): ItemUseResult
 	{
-		if (WaterLogging::isSourceWaterLogged($blockClicked)) {
-			return $this->handleWaterRemoval($player, $blockClicked, $face, $returnedItems);
+		if (EventListener::$sneakHack !== null) {
+			EventListener::$sneakHack->setSneaking(false); //This should be the same player
+			EventListener::$sneakHack = null;
 		}
 
-		if (WaterLogging::isSourceWaterLogged($blockReplace)) {
-			return $this->handleWaterRemoval($player, $blockReplace, $face, $returnedItems);
+		if (WaterLogging::isSourceWaterLogged($blockClicked)) {
+			return $this->handleWaterRemoval($player, $blockClicked, $face, $returnedItems);
 		}
 
 		return parent::onInteractBlock($player, $blockReplace, $blockClicked, $face, $clickVector, $returnedItems);
