@@ -7,10 +7,12 @@ use platz1de\WaterLogging\WaterLogging;
 use pocketmine\block\Block;
 use pocketmine\block\RuntimeBlockStateRegistry;
 use pocketmine\block\SnowLayer as PMSnowLayer;
+use pocketmine\block\VanillaBlocks;
 use pocketmine\item\Item;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
 use pocketmine\world\BlockTransaction;
+use pocketmine\world\sound\Sound;
 
 class SnowLayer extends PMSnowLayer
 {
@@ -26,6 +28,8 @@ class SnowLayer extends PMSnowLayer
 	{
 		if (WaterLoggableBlocks::isSnowLoggable($blockReplace)) {
 			self::$plant = $blockReplace->getStateId();
+		} else {
+			self::$plant = null;
 		}
 		return parent::place($tx, $item, $blockReplace, $blockClicked, $face, $clickVector, $player);
 	}
@@ -49,5 +53,29 @@ class SnowLayer extends PMSnowLayer
 		WaterLogging::clearBlockLayerId($this);
 		$this->getPosition()->getWorld()->setBlock($this->getPosition(), RuntimeBlockStateRegistry::getInstance()->fromStateId($plant));
 		return true;
+	}
+
+	public function tickFalling(): ?Block
+	{
+		//Hack as not all snowloggable blocks can be replaced
+		$block = $this->getPosition()->getWorld()->getBlock($this->getPosition());
+		if (WaterLoggableBlocks::isSnowLoggable($block)) {
+			self::$plant = $block->getStateId();
+			$this->getPosition()->getWorld()->setBlock($this->getPosition(), VanillaBlocks::AIR());
+			return $this; //force block to be replaced
+		}
+
+		self::$plant = null;
+		return null;
+	}
+
+	public function getLandSound(): ?Sound
+	{
+		//Another hack to recover the plant block
+		if (self::$plant !== null) {
+			WaterLogging::addSnowLogging($this, self::$plant);
+			self::$plant = null;
+		}
+		return parent::getLandSound();
 	}
 }
