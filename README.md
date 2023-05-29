@@ -24,4 +24,4 @@ Note: Entity movement caused by flowing water logged blocks is NOT implemented a
 ## Removing this plugin
 This plugin uses block layers to store information, while this is the intended storage by mojang, it is only poorly supported by pocketmine.<br>
 Removing this plugin will NOT remove waterlogged blocks. They remain saved in your world without any functionality. <br>
-A plugin to remove all waterlogged blocks will follow soon.
+Use [BulkLayerEditor](https://poggit.pmmp.io/ci/platz1de/BulkLayerEditor/) to remove them properly.
