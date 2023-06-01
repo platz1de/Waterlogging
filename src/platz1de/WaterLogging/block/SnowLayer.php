@@ -46,11 +46,11 @@ class SnowLayer extends PMSnowLayer
 	public function onBreak(Item $item, ?Player $player = null, array &$returnedItems = []): bool
 	{
 		$plant = WaterLogging::getSnowPlant($this);
+		WaterLogging::clearBlockLayerId($this);
 		parent::onBreak($item, $player, $returnedItems);
 		if ($plant === false) {
 			return true;
 		}
-		WaterLogging::clearBlockLayerId($this);
 		$this->getPosition()->getWorld()->setBlock($this->getPosition(), RuntimeBlockStateRegistry::getInstance()->fromStateId($plant));
 		return true;
 	}
