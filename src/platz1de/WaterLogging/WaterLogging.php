@@ -167,7 +167,7 @@ class WaterLogging extends PluginBase
 				return false;
 			}
 		}
-		return $id & Block::INTERNAL_STATE_DATA_MASK;
+		return ($id & Block::INTERNAL_STATE_DATA_MASK) ^ BlockTypeIds::WATER;
 	}
 
 	/**
