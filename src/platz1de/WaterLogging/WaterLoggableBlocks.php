@@ -16,7 +16,7 @@ class WaterLoggableBlocks
 	 */
 	private static array $waterLoggable = [
 		BlockTypeIds::ACTIVATOR_RAIL,
-		//Amethyst Cluster
+		BlockTypeIds::AMETHYST_CLUSTER,
 		BlockTypeIds::ANVIL,
 		//Azalea
 		BlockTypeIds::BANNER,
@@ -25,8 +25,9 @@ class WaterLoggableBlocks
 		BlockTypeIds::BEACON,
 		BlockTypeIds::BED,
 		BlockTypeIds::BELL,
-		//Big Dripleaf
+		//Border
 		BlockTypeIds::BREWING_STAND,
+		//Bubble Column
 
 		BlockTypeIds::STONE_BUTTON,
 		BlockTypeIds::OAK_BUTTON,
@@ -37,16 +38,20 @@ class WaterLoggableBlocks
 		BlockTypeIds::DARK_OAK_BUTTON,
 		BlockTypeIds::MANGROVE_BUTTON,
 		//Bamboo Button
-		//Cherry Button
+		BlockTypeIds::CHERRY_BUTTON,
 		BlockTypeIds::CRIMSON_BUTTON,
 		BlockTypeIds::WARPED_BUTTON,
 		BlockTypeIds::POLISHED_BLACKSTONE_BUTTON,
 
 		BlockTypeIds::CACTUS,
 		BlockTypeIds::CAKE,
+		BlockTypeIds::CAKE_WITH_CANDLE,
+		BlockTypeIds::CAKE_WITH_DYED_CANDLE,
 		//Campfire / Soul Campfire
 		BlockTypeIds::CANDLE,
+		BlockTypeIds::DYED_CANDLE,
 		BlockTypeIds::CARPET,
+		//Calibrated Sculk Sensor
 		BlockTypeIds::CAULDRON,
 
 		BlockTypeIds::WATER_CAULDRON,
@@ -60,12 +65,14 @@ class WaterLoggableBlocks
 		BlockTypeIds::COBWEB,
 		//Composter
 		//Conduit
+		//Copper Grate
 		BlockTypeIds::CORAL,
 		BlockTypeIds::CORAL_FAN,
 		BlockTypeIds::WALL_CORAL_FAN,
 		BlockTypeIds::DAYLIGHT_SENSOR,
 		BlockTypeIds::DEAD_BUSH,
-		//Decorated Coral Fan
+		//Dead Coral Fan
+		//Decorated Pot
 		BlockTypeIds::DETECTOR_RAIL,
 
 		BlockTypeIds::IRON_DOOR,
@@ -77,12 +84,13 @@ class WaterLoggableBlocks
 		BlockTypeIds::DARK_OAK_DOOR,
 		BlockTypeIds::MANGROVE_DOOR,
 		//Bamboo Door
-		//Cherry Door
+		BlockTypeIds::CHERRY_DOOR,
 		BlockTypeIds::CRIMSON_DOOR,
 		BlockTypeIds::WARPED_DOOR,
 
 		BlockTypeIds::DRAGON_EGG,
 		BlockTypeIds::ENCHANTING_TABLE,
+		BlockTypeIds::END_PORTAL_FRAME,
 		BlockTypeIds::ENDER_CHEST,
 
 		BlockTypeIds::OAK_FENCE,
@@ -93,7 +101,7 @@ class WaterLoggableBlocks
 		BlockTypeIds::DARK_OAK_FENCE,
 		BlockTypeIds::MANGROVE_FENCE,
 		//Bamboo Fence
-		//Cherry Fence
+		BlockTypeIds::CHERRY_FENCE,
 		BlockTypeIds::CRIMSON_FENCE,
 		BlockTypeIds::WARPED_FENCE,
 		BlockTypeIds::NETHER_BRICK_FENCE,
@@ -106,7 +114,7 @@ class WaterLoggableBlocks
 		BlockTypeIds::DARK_OAK_FENCE_GATE,
 		BlockTypeIds::MANGROVE_FENCE_GATE,
 		//Bamboo Fence Gate
-		//Cherry Fence Gate
+		BlockTypeIds::CHERRY_FENCE_GATE,
 		BlockTypeIds::CRIMSON_FENCE_GATE,
 		BlockTypeIds::WARPED_FENCE_GATE,
 
@@ -114,12 +122,16 @@ class WaterLoggableBlocks
 		//Flowering Azalea
 		BlockTypeIds::GLASS_PANE,
 		BlockTypeIds::STAINED_GLASS_PANE,
-		//Glow Lichen
+		BlockTypeIds::GLOW_LICHEN,
+		BlockTypeIds::GLOWING_ITEM_FRAME,
 		//Grindstone
 		BlockTypeIds::HARDENED_GLASS_PANE,
+		BlockTypeIds::STAINED_HARDENED_GLASS_PANE,
 		BlockTypeIds::HOPPER,
 		BlockTypeIds::IRON_BARS,
 		BlockTypeIds::ITEM_FRAME,
+		//Kelp
+		//Kelp Plant
 		BlockTypeIds::LADDER,
 		BlockTypeIds::LANTERN,
 		BlockTypeIds::SOUL_LANTERN,
@@ -131,7 +143,7 @@ class WaterLoggableBlocks
 		BlockTypeIds::ACACIA_LEAVES,
 		BlockTypeIds::DARK_OAK_LEAVES,
 		BlockTypeIds::MANGROVE_LEAVES,
-		//Cherry Leaves
+		BlockTypeIds::CHERRY_LEAVES,
 		BlockTypeIds::AZALEA_LEAVES,
 		BlockTypeIds::FLOWERING_AZALEA_LEAVES,
 
@@ -140,6 +152,7 @@ class WaterLoggableBlocks
 		BlockTypeIds::MANGROVE_ROOTS,
 		BlockTypeIds::MOB_HEAD,
 		//Piston / Piston Head
+		//Poster
 		//Pointed Dripstone
 		BlockTypeIds::POWERED_RAIL,
 
@@ -155,7 +168,7 @@ class WaterLoggableBlocks
 		BlockTypeIds::DARK_OAK_PRESSURE_PLATE,
 		BlockTypeIds::MANGROVE_PRESSURE_PLATE,
 		//Bamboo Pressure Plate
-		//Cherry Pressure Plate
+		BlockTypeIds::CHERRY_PRESSURE_PLATE,
 		BlockTypeIds::CRIMSON_PRESSURE_PLATE,
 		BlockTypeIds::WARPED_PRESSURE_PLATE,
 
@@ -183,7 +196,7 @@ class WaterLoggableBlocks
 		BlockTypeIds::MANGROVE_SIGN,
 		BlockTypeIds::MANGROVE_WALL_SIGN,
 		//Bamboo Sign
-		//Cherry Sign
+		BlockTypeIds::CHERRY_SIGN,
 		BlockTypeIds::CRIMSON_SIGN,
 		BlockTypeIds::CRIMSON_WALL_SIGN,
 		BlockTypeIds::WARPED_SIGN,
@@ -197,7 +210,7 @@ class WaterLoggableBlocks
 		BlockTypeIds::DARK_OAK_SLAB,
 		BlockTypeIds::MANGROVE_SLAB,
 		//Bamboo Slab
-		//Cherry Slab
+		BlockTypeIds::CHERRY_SLAB,
 		BlockTypeIds::CRIMSON_SLAB,
 		BlockTypeIds::WARPED_SLAB,
 		BlockTypeIds::STONE_SLAB,
@@ -239,7 +252,8 @@ class WaterLoggableBlocks
 		BlockTypeIds::DEEPSLATE_TILE_SLAB,
 		BlockTypeIds::FAKE_WOODEN_SLAB,
 
-		//Small Dripleaf
+		//Slate
+		BlockTypeIds::SMALL_DRIPLEAF,
 		BlockTypeIds::MONSTER_SPAWNER,
 
 		BlockTypeIds::OAK_STAIRS,
@@ -250,7 +264,7 @@ class WaterLoggableBlocks
 		BlockTypeIds::DARK_OAK_STAIRS,
 		BlockTypeIds::MANGROVE_STAIRS,
 		//Bamboo Stairs
-		//Cherry Stairs
+		BlockTypeIds::CHERRY_STAIRS,
 		BlockTypeIds::CRIMSON_STAIRS,
 		BlockTypeIds::WARPED_STAIRS,
 		BlockTypeIds::STONE_STAIRS,
@@ -288,8 +302,8 @@ class WaterLoggableBlocks
 		BlockTypeIds::DEEPSLATE_BRICK_STAIRS,
 		BlockTypeIds::DEEPSLATE_TILE_STAIRS,
 
-		//Structure Block
 		BlockTypeIds::STONECUTTER,
+		//Tall Seagrass
 
 		BlockTypeIds::IRON_TRAPDOOR,
 		BlockTypeIds::OAK_TRAPDOOR,
@@ -300,9 +314,10 @@ class WaterLoggableBlocks
 		BlockTypeIds::DARK_OAK_TRAPDOOR,
 		BlockTypeIds::MANGROVE_TRAPDOOR,
 		//Bamboo Trapdoor
-		//Cherry Trapdoor
+		BlockTypeIds::CHERRY_TRAPDOOR,
 		BlockTypeIds::CRIMSON_TRAPDOOR,
 		BlockTypeIds::WARPED_TRAPDOOR,
+		//Copper Trapdoor
 
 		//Turtle Egg
 		BlockTypeIds::UNDERWATER_TORCH,
@@ -336,7 +351,8 @@ class WaterLoggableBlocks
 	 * @var int[]
 	 */
 	private static array $flowingWaterLoggable = [
-		//Camera
+		BlockTypeIds::BIG_DRIPLEAF_HEAD,
+		BlockTypeIds::BIG_DRIPLEAF_STEM,
 		BlockTypeIds::COMPOUND_CREATOR,
 		BlockTypeIds::ELEMENT_CONSTRUCTOR,
 		BlockTypeIds::END_ROD,
@@ -374,8 +390,10 @@ class WaterLoggableBlocks
 		BlockTypeIds::CORNFLOWER,
 		BlockTypeIds::LILY_OF_THE_VALLEY,
 		BlockTypeIds::WITHER_ROSE,
-		//Torchflower
-		//Crimson & Warped Roots
+		BlockTypeIds::TORCHFLOWER,
+		BlockTypeIds::PITCHER_PLANT,
+		BlockTypeIds::CRIMSON_ROOTS,
+		BlockTypeIds::WARPED_ROOTS
 	];
 
 	/**
