@@ -12,23 +12,22 @@ use pocketmine\block\BlockTypeIds;
 use pocketmine\block\BlockTypeInfo;
 use pocketmine\block\RuntimeBlockStateRegistry;
 use pocketmine\block\VanillaBlocks;
-use pocketmine\data\bedrock\block\BlockStateNames;
 use pocketmine\data\bedrock\item\ItemTypeNames;
 use pocketmine\item\ItemIdentifier;
 use pocketmine\item\ItemTypeIds;
 use pocketmine\item\VanillaItems;
 use pocketmine\math\Vector3;
-use pocketmine\nbt\tag\IntTag;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\types\BlockPosition;
 use pocketmine\network\mcpe\protocol\UpdateBlockPacket;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\SingletonTrait;
-use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
 use pocketmine\world\format\PalettedBlockArray;
 use pocketmine\world\World;
+use pocketmine\block\Water as PMWater;
 use ReflectionClass;
+use Throwable;
 use UnexpectedValueException;
 
 class WaterLogging extends PluginBase
@@ -119,7 +118,8 @@ class WaterLogging extends PluginBase
 	 */
 	public static function isSourceWaterLoggedAt(World $world, Vector3 $pos, bool $validate = true): bool
 	{
-		return self::getWaterDataAt($world, $pos, $validate) === 0;
+		$block = self::getWaterDataAt($world, $pos, $validate);
+		return $block !== false && $block->isSource();
 	}
 
 	/**
@@ -131,35 +131,35 @@ class WaterLogging extends PluginBase
 	public static function getWaterDecayAt(World $world, Vector3 $pos, bool $validate = true): int|false
 	{
 		$data = self::getWaterDataAt($world, $pos, $validate);
-		return $data === false ? false : $data & 0x07;
+		return $data === false ? false : $data->getDecay();
 	}
 
 	/**
 	 * @param World   $world
 	 * @param Vector3 $pos
 	 * @param bool    $validate Whether to validate if the block is even able to be waterlogged
-	 * @return int|false metadata of waterlogged block or false if not waterlogged
+	 * @return PMWater|false metadata of waterlogged block or false if not waterlogged
 	 */
-	public static function getWaterDataAt(World $world, Vector3 $pos, bool $validate = true): int|false
+	public static function getWaterDataAt(World $world, Vector3 $pos, bool $validate = true): PMWater|false
 	{
 		try {
 			$layer = self::getBlockLayer($world, $pos);
 		} catch (UnexpectedValueException) {
 			return false; // Water can attempt to flow next to unloaded chunks
 		}
-		$id = $layer->get($pos->getX() & 0x0f, $pos->getY() & 0x0f, $pos->getZ() & 0x0f);
-		if ($id >> Block::INTERNAL_STATE_DATA_BITS !== BlockTypeIds::WATER) {
+		try {
+			$block = RuntimeBlockStateRegistry::getInstance()->fromStateId($layer->get($pos->getX() & 0x0f, $pos->getY() & 0x0f, $pos->getZ() & 0x0f));
+		} catch (Throwable) {
+			self::getInstance()->getLogger()->debug("Removed broken water logging state at {$pos->getX()}, {$pos->getY()}, {$pos->getZ()}");
+			self::clearBlockLayerId($world->getBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ()));
+			return false;
+		}
+		if (!$block instanceof PMWater) {
 			return false;
 		}
 		if ($validate) {
-			//We expect this to return a water block, as we already checked the block type
-			$tag = GlobalBlockStateHandlers::getSerializer()->serialize($id)->getState(BlockStateNames::LIQUID_DEPTH);
-			if (!$tag instanceof IntTag) {
-				return false;
-			}
-			$blockData = $tag->getValue();
-			$decay = $blockData & 0x07;
-			$falling = ($blockData & 0x08) !== 0;
+			$decay = $block->getDecay();
+			$falling = $block->isFalling();
 			if (($decay === 0 && !$falling && !WaterLoggableBlocks::isWaterLoggable($world->getBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ()))) ||
 				(($decay !== 0 || $falling) && !WaterLoggableBlocks::isFlowingWaterLoggable($world->getBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ())))) {
 				self::getInstance()->getLogger()->debug("Fixed leftover water logging state at {$pos->getX()}, {$pos->getY()}, {$pos->getZ()}");
@@ -167,7 +167,7 @@ class WaterLogging extends PluginBase
 				return false;
 			}
 		}
-		return ($id & Block::INTERNAL_STATE_DATA_MASK) ^ BlockTypeIds::WATER;
+		return $block;
 	}
 
 	/**
@@ -194,17 +194,23 @@ class WaterLogging extends PluginBase
 
 	/**
 	 * @param Block $block
-	 * @return int|false
+	 * @return Block|false
 	 */
-	public static function getSnowPlant(Block $block): int|false
+	public static function getSnowPlant(Block $block): Block|false
 	{
 		try {
 			$layer = self::getBlockLayer($block->getPosition()->getWorld(), $block->getPosition());
 		} catch (UnexpectedValueException) {
 			return false; //Shouldn't happen
 		}
-		$id = $layer->get($block->getPosition()->getX() & 0x0f, $block->getPosition()->getY() & 0x0f, $block->getPosition()->getZ() & 0x0f);
-		if (!in_array($id >> Block::INTERNAL_STATE_DATA_BITS, WaterLoggableBlocks::getSnowLoggable(), true)) {
+		try {
+			$plant = RuntimeBlockStateRegistry::getInstance()->fromStateId($layer->get($block->getPosition()->getX() & 0x0f, $block->getPosition()->getY() & 0x0f, $block->getPosition()->getZ() & 0x0f));
+		} catch (Throwable) {
+			self::getInstance()->getLogger()->debug("Removed broken snow logging state at {$block->getPosition()->getX()}, {$block->getPosition()->getY()}, {$block->getPosition()->getZ()}");
+			self::clearBlockLayerId($block);
+			return false;
+		}
+		if (!in_array($plant->getTypeId(), WaterLoggableBlocks::getSnowLoggable(), true)) {
 			return false;
 		}
 		if ($block->getTypeId() !== BlockTypeIds::SNOW_LAYER) {
@@ -212,7 +218,7 @@ class WaterLogging extends PluginBase
 			self::clearBlockLayerId($block);
 			return false;
 		}
-		return $id;
+		return $plant;
 	}
 
 	/**

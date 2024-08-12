@@ -5,7 +5,6 @@ namespace platz1de\WaterLogging\block;
 use platz1de\WaterLogging\WaterLoggableBlocks;
 use platz1de\WaterLogging\WaterLogging;
 use pocketmine\block\Block;
-use pocketmine\block\RuntimeBlockStateRegistry;
 use pocketmine\block\SnowLayer as PMSnowLayer;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\item\Item;
@@ -51,7 +50,7 @@ class SnowLayer extends PMSnowLayer
 		if ($plant === false) {
 			return true;
 		}
-		$this->getPosition()->getWorld()->setBlock($this->getPosition(), RuntimeBlockStateRegistry::getInstance()->fromStateId($plant));
+		$this->getPosition()->getWorld()->setBlock($this->getPosition(), $plant);
 		return true;
 	}
 

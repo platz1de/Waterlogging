@@ -62,11 +62,11 @@ class BlockListener implements ChunkListener
 	{
 		if (WaterLogging::isWaterLoggedAt($this->world, $block, false) && (
 				!WaterLoggableBlocks::isWaterLoggable($b = $this->world->getBlock($block)) ||
-				(WaterLogging::getWaterDataAt($this->world, $block, false) !== 0 && !WaterLoggableBlocks::isFlowingWaterLoggable($b = $this->world->getBlock($block)))
+				(!WaterLogging::getWaterDataAt($this->world, $block, false)->isSource() && !WaterLoggableBlocks::isFlowingWaterLoggable($b = $this->world->getBlock($block)))
 			)) {
 			if ($b instanceof Air) {
 				$data = WaterLogging::getWaterDataAt($this->world, $block, false);
-				$this->world->setBlock($block, VanillaBlocks::WATER()->setDecay($data & 0x07)->setFalling(($data & 0x08) !== 0));
+				$this->world->setBlock($block, VanillaBlocks::WATER()->setDecay($data->getDecay())->setFalling($data->isFalling()));
 			}
 			WaterLogging::removeWaterLogging($b);
 		} elseif (WaterLogging::getSnowPlant($b = $this->world->getBlock($block)) !== false && $b->getTypeId() !== BlockTypeIds::SNOW_LAYER) {

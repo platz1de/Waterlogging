@@ -152,8 +152,8 @@ class Water extends PMWater
 			if (WaterLoggableBlocks::blocksWaterFlow($block, $face)) {
 				return;
 			}
-			$blockDecay = $data & 0x07;
-			if ($data === 0) {
+			$blockDecay = $data->getDecay();
+			if ($data->isSource()) {
 				++$sources;
 			}
 		}
